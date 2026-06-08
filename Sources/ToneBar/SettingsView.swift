@@ -5,9 +5,6 @@ struct SettingsView: View {
     @ObservedObject var audio: AudioController
     @ObservedObject var prefs = Preferences.shared
 
-    /// Discrete-step options offered in the picker. 0 == continuous.
-    private let stepOptions = [0, 2, 3, 4, 5, 6, 11]
-
     var body: some View {
         Form {
             previewSection
@@ -17,8 +14,8 @@ struct SettingsView: View {
             generalSection
         }
         .formStyle(.grouped)
-        .frame(width: 430)
-        .frame(minHeight: 560)
+        .frame(width: 440)
+        .frame(minHeight: 600)
         .scrollContentBackground(.hidden)
         .background(.ultraThinMaterial)
         .tint(prefs.tint.color)
@@ -36,11 +33,11 @@ struct SettingsView: View {
                         .frame(width: 52, height: 52)
                         .background {
                             RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .fill(prefs.tint.color ?? Color.accentColor)
+                                .fill(prefs.tint.resolved)
                         }
                     VStack(alignment: .leading, spacing: 2) {
                         Text("音条 ToneBar").font(.headline)
-                        Text("Lives in your menu bar")
+                        Text("常驻菜单栏的音量滑条")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -63,18 +60,24 @@ struct SettingsView: View {
     // MARK: - Appearance
 
     private var appearanceSection: some View {
-        Section("Appearance") {
-            Picker("Icon", selection: $prefs.iconStyle) {
+        Section("外观") {
+            Picker("图标样式", selection: $prefs.iconStyle) {
                 ForEach(IconStyle.allCases) { style in
                     Text(style.label).tag(style)
                 }
             }
 
-            Picker("Accent", selection: $prefs.tint) {
+            Picker("滑条样式", selection: $prefs.sliderStyle) {
+                ForEach(SliderStyle.allCases) { style in
+                    Text(style.label).tag(style)
+                }
+            }
+
+            Picker("强调色", selection: $prefs.tint) {
                 ForEach(TintChoice.allCases) { choice in
                     HStack {
                         Circle()
-                            .fill(choice.color ?? Color.accentColor)
+                            .fill(choice.resolved)
                             .frame(width: 12, height: 12)
                         Text(choice.label)
                     }
@@ -84,7 +87,7 @@ struct SettingsView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Slider width")
+                    Text("滑条宽度")
                     Spacer()
                     Text("\(Int(prefs.sliderWidth)) pt")
                         .foregroundStyle(.secondary)
@@ -93,30 +96,52 @@ struct SettingsView: View {
                 Slider(value: $prefs.sliderWidth, in: 60...240, step: 5)
             }
 
-            Toggle("Show percentage", isOn: $prefs.showPercentage)
-            Toggle("Glass background", isOn: $prefs.glassBackground)
+            Toggle("显示百分比", isOn: $prefs.showPercentage)
+            Toggle("玻璃背景", isOn: $prefs.glassBackground)
         }
     }
 
     // MARK: - Steps
 
+    private var snapEnabled: Binding<Bool> {
+        Binding(
+            get: { prefs.steps >= Preferences.stepRange.lowerBound },
+            set: { on in prefs.steps = on ? max(Preferences.stepRange.lowerBound, prefs.steps) : 0 }
+        )
+    }
+
+    private var stepCount: Binding<Int> {
+        Binding(
+            get: { max(Preferences.stepRange.lowerBound, prefs.steps) },
+            set: { prefs.steps = min(Preferences.stepRange.upperBound,
+                                     max(Preferences.stepRange.lowerBound, $0)) }
+        )
+    }
+
     private var stepsSection: some View {
         Section {
-            Picker("Steps", selection: $prefs.steps) {
-                ForEach(stepOptions, id: \.self) { value in
-                    Text(value == 0 ? "Continuous" : "\(value) steps").tag(value)
+            Toggle("吸附到固定档位", isOn: snapEnabled)
+
+            if prefs.steps >= Preferences.stepRange.lowerBound {
+                Stepper(value: stepCount, in: Preferences.stepRange) {
+                    HStack {
+                        Text("档位数量")
+                        Spacer()
+                        Text("\(prefs.steps) 档")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
                 }
-            }
-            if prefs.steps > 1 {
                 Text(stepPreview)
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
+                    .lineLimit(2)
             }
         } header: {
-            Text("Steps")
+            Text("档位")
         } footer: {
-            Text("Snap the slider to fixed levels. “5 steps” gives 0 · 25 · 50 · 75 · 100.")
+            Text("开启后滑条会吸附到固定音量级别，可设 5–20 档。例如 5 档为 0 · 25 · 50 · 75 · 100。")
         }
     }
 
@@ -131,19 +156,19 @@ struct SettingsView: View {
     // MARK: - Behavior
 
     private var behaviorSection: some View {
-        Section("Behavior") {
-            Toggle("Scroll over the slider to adjust", isOn: $prefs.scrollToAdjust)
+        Section("行为") {
+            Toggle("在滑条上滚动以调节音量", isOn: $prefs.scrollToAdjust)
         }
     }
 
     // MARK: - General
 
     private var generalSection: some View {
-        Section("General") {
-            Toggle("Launch at login", isOn: $prefs.launchAtLogin)
+        Section("通用") {
+            Toggle("开机启动", isOn: $prefs.launchAtLogin)
 
             HStack {
-                Text("Output device")
+                Text("输出设备")
                 Spacer()
                 Text(audio.deviceName.isEmpty ? "—" : audio.deviceName)
                     .foregroundStyle(.secondary)
@@ -152,7 +177,7 @@ struct SettingsView: View {
             }
 
             HStack {
-                Text("Version")
+                Text("版本")
                 Spacer()
                 Text(appVersion).foregroundStyle(.secondary)
             }
@@ -160,7 +185,7 @@ struct SettingsView: View {
             Button(role: .destructive) {
                 NSApp.terminate(nil)
             } label: {
-                Text("Quit ToneBar")
+                Text("退出 音条 ToneBar")
             }
         }
     }

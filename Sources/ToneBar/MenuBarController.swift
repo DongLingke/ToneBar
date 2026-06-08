@@ -103,24 +103,24 @@ final class MenuBarController: NSObject {
         guard let button = statusItem.button else { return }
         let menu = NSMenu()
 
-        let mute = NSMenuItem(title: audio.muted ? "Unmute" : "Mute",
+        let mute = NSMenuItem(title: audio.muted ? "取消静音" : "静音",
                               action: #selector(toggleMute), keyEquivalent: "")
         mute.target = self
         menu.addItem(mute)
 
         if !audio.deviceName.isEmpty {
-            let device = NSMenuItem(title: "Output: \(audio.deviceName)", action: nil, keyEquivalent: "")
+            let device = NSMenuItem(title: "输出设备：\(audio.deviceName)", action: nil, keyEquivalent: "")
             device.isEnabled = false
             menu.addItem(device)
         }
 
         menu.addItem(.separator())
 
-        let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        let settings = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
 
-        let quit = NSMenuItem(title: "Quit ToneBar", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "退出 音条 ToneBar", action: #selector(quit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
 

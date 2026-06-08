@@ -4,6 +4,13 @@
 <dict>
     <key>CFBundleName</key>
     <string>ToneBar</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>zh-Hans</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>zh-Hans</string>
+        <string>en</string>
+    </array>
     <key>CFBundleDisplayName</key>
     <string>音条 ToneBar</string>
     <key>CFBundleIdentifier</key>

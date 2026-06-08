@@ -13,11 +13,11 @@ enum IconStyle: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .waves:    return "Speaker Waves"
-        case .speaker:  return "Speaker"
-        case .waveform: return "Waveform"
-        case .dot:      return "Minimal Dot"
-        case .none:     return "No Icon"
+        case .waves:    return "扬声器声波"
+        case .speaker:  return "扬声器"
+        case .waveform: return "波形"
+        case .dot:      return "极简圆点"
+        case .none:     return "无图标"
         }
     }
 
@@ -46,7 +46,19 @@ enum TintChoice: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String { rawValue.capitalized }
+    var label: String {
+        switch self {
+        case .system:   return "系统"
+        case .blue:     return "蓝色"
+        case .indigo:   return "靛蓝"
+        case .purple:   return "紫色"
+        case .pink:     return "粉色"
+        case .red:      return "红色"
+        case .orange:   return "橙色"
+        case .green:    return "绿色"
+        case .graphite: return "石墨"
+        }
+    }
 
     var color: Color? {
         switch self {
@@ -61,6 +73,33 @@ enum TintChoice: String, CaseIterable, Identifiable {
         case .graphite: return Color(white: 0.5)
         }
     }
+
+    /// Concrete color for drawing (falls back to the system accent).
+    var resolved: Color { color ?? .accentColor }
+}
+
+// MARK: - Slider style
+
+enum SliderStyle: String, CaseIterable, Identifiable {
+    case capsule      // filled capsule track + white knob (default)
+    case glass        // liquid-glass track + glass knob
+    case gradient     // gradient-filled track
+    case line         // thin minimal line
+    case segmented    // capsule track with step ticks
+    case system       // native macOS slider
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .capsule:   return "胶囊"
+        case .glass:     return "液态玻璃"
+        case .gradient:  return "渐变"
+        case .line:      return "极细线"
+        case .segmented: return "分段刻度"
+        case .system:    return "系统原生"
+        }
+    }
 }
 
 // MARK: - Preferences store
@@ -71,15 +110,21 @@ final class Preferences: ObservableObject {
 
     static let shared = Preferences()
 
+    /// Allowed range for the number of discrete steps.
+    static let stepRange = 5...20
+
     private let store = UserDefaults.standard
 
     @Published var iconStyle: IconStyle {
         didSet { store.set(iconStyle.rawValue, forKey: Keys.iconStyle) }
     }
+    @Published var sliderStyle: SliderStyle {
+        didSet { store.set(sliderStyle.rawValue, forKey: Keys.sliderStyle) }
+    }
     @Published var sliderWidth: Double {
         didSet { store.set(sliderWidth, forKey: Keys.sliderWidth) }
     }
-    /// Number of discrete steps. 0 == continuous.
+    /// Number of discrete steps. 0 == continuous, otherwise within `stepRange`.
     /// e.g. 5 => 0, 25, 50, 75, 100.
     @Published var steps: Int {
         didSet { store.set(steps, forKey: Keys.steps) }
@@ -102,8 +147,15 @@ final class Preferences: ObservableObject {
 
     private init() {
         iconStyle = IconStyle(rawValue: store.string(forKey: Keys.iconStyle) ?? "") ?? .waves
+        sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .capsule
         sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 120
-        steps = store.object(forKey: Keys.steps) as? Int ?? 0
+
+        // Normalize persisted step counts into the supported 5...20 range
+        // (0 stays "continuous").
+        let rawSteps = store.object(forKey: Keys.steps) as? Int ?? 0
+        steps = rawSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
+                                        max(Preferences.stepRange.lowerBound, rawSteps))
+
         showPercentage = store.object(forKey: Keys.showPercentage) as? Bool ?? true
         scrollToAdjust = store.object(forKey: Keys.scrollToAdjust) as? Bool ?? true
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
@@ -125,6 +177,7 @@ final class Preferences: ObservableObject {
 
     private enum Keys {
         static let iconStyle = "iconStyle"
+        static let sliderStyle = "sliderStyle"
         static let sliderWidth = "sliderWidth"
         static let steps = "steps"
         static let showPercentage = "showPercentage"

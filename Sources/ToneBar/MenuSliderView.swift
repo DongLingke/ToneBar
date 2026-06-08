@@ -8,14 +8,6 @@ struct MenuSliderView: View {
     @ObservedObject var audio: AudioController
     @ObservedObject var prefs = Preferences.shared
 
-    /// Binding that snaps to the configured number of steps as the user drags.
-    private var sliderBinding: Binding<Double> {
-        Binding(
-            get: { audio.volume },
-            set: { audio.setVolume(prefs.snap($0)) }
-        )
-    }
-
     var body: some View {
         HStack(spacing: 7) {
             if let symbol = prefs.iconStyle.symbolName(volume: audio.volume, muted: audio.muted) {
@@ -65,14 +57,18 @@ struct MenuSliderView: View {
             .contentTransition(.symbolEffect(.replace))
         }
         .buttonStyle(.plain)
-        .help(audio.muted ? "Unmute" : "Mute")
+        .help(audio.muted ? "取消静音" : "静音")
     }
 
     private var slider: some View {
-        Slider(value: sliderBinding, in: 0...1)
-            .controlSize(.mini)
-            .frame(width: prefs.sliderWidth)
-            .tint(prefs.tint.color)
-            .opacity(audio.muted ? 0.45 : 1)
+        VolumeSliderControl(
+            value: Binding(get: { audio.volume }, set: { audio.setVolume($0) }),
+            width: prefs.sliderWidth,
+            tint: prefs.tint.resolved,
+            style: prefs.sliderStyle,
+            steps: prefs.steps,
+            muted: audio.muted,
+            snap: { prefs.snap($0) }
+        )
     }
 }
