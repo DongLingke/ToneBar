@@ -66,6 +66,8 @@ struct MenuSliderView: View {
             width: prefs.sliderWidth,
             tint: prefs.tint.resolved,
             style: prefs.sliderStyle,
+            knobStyle: prefs.knobStyle,
+            hideKnobWhenIdle: prefs.hideKnobWhenIdle,
             steps: prefs.steps,
             muted: audio.muted,
             snap: { prefs.snap($0) }

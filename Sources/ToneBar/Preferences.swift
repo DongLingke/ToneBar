@@ -102,6 +102,30 @@ enum SliderStyle: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Knob (thumb) style
+
+enum KnobStyle: String, CaseIterable, Identifiable {
+    case circle       // white circle (default)
+    case glass        // liquid-glass circle
+    case tinted       // filled with the accent color
+    case ring         // hollow ring
+    case bar          // vertical rounded bar
+    case none         // no knob, just the track fill
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .circle: return "圆形"
+        case .glass:  return "液态玻璃"
+        case .tinted: return "彩色填充"
+        case .ring:   return "圆环"
+        case .bar:    return "竖条"
+        case .none:   return "无"
+        }
+    }
+}
+
 // MARK: - Preferences store
 
 /// Single source of truth shared by the AppKit status item and the SwiftUI
@@ -120,6 +144,13 @@ final class Preferences: ObservableObject {
     }
     @Published var sliderStyle: SliderStyle {
         didSet { store.set(sliderStyle.rawValue, forKey: Keys.sliderStyle) }
+    }
+    @Published var knobStyle: KnobStyle {
+        didSet { store.set(knobStyle.rawValue, forKey: Keys.knobStyle) }
+    }
+    /// Hide the knob unless the pointer is hovering over the slider.
+    @Published var hideKnobWhenIdle: Bool {
+        didSet { store.set(hideKnobWhenIdle, forKey: Keys.hideKnobWhenIdle) }
     }
     @Published var sliderWidth: Double {
         didSet { store.set(sliderWidth, forKey: Keys.sliderWidth) }
@@ -148,6 +179,8 @@ final class Preferences: ObservableObject {
     private init() {
         iconStyle = IconStyle(rawValue: store.string(forKey: Keys.iconStyle) ?? "") ?? .waves
         sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .capsule
+        knobStyle = KnobStyle(rawValue: store.string(forKey: Keys.knobStyle) ?? "") ?? .circle
+        hideKnobWhenIdle = store.object(forKey: Keys.hideKnobWhenIdle) as? Bool ?? false
         sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 120
 
         // Normalize persisted step counts into the supported 5...20 range
@@ -178,6 +211,8 @@ final class Preferences: ObservableObject {
     private enum Keys {
         static let iconStyle = "iconStyle"
         static let sliderStyle = "sliderStyle"
+        static let knobStyle = "knobStyle"
+        static let hideKnobWhenIdle = "hideKnobWhenIdle"
         static let sliderWidth = "sliderWidth"
         static let steps = "steps"
         static let showPercentage = "showPercentage"

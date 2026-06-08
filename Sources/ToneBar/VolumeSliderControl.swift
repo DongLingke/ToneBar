@@ -1,22 +1,37 @@
 import SwiftUI
 
-/// A compact, fully custom volume slider that supports several visual styles.
-/// Handles its own drag gesture so it works inside the menu-bar status item.
+/// A compact, fully custom volume slider that supports several visual styles
+/// for both the track and the knob. Handles its own drag gesture so it works
+/// inside the menu-bar status item.
 struct VolumeSliderControl: View {
 
     @Binding var value: Double          // 0...1
     var width: CGFloat
     var tint: Color
     var style: SliderStyle
+    var knobStyle: KnobStyle
+    var hideKnobWhenIdle: Bool
     var steps: Int
     var muted: Bool
     var snap: (Double) -> Double
 
-    private var knobSize: CGFloat {
-        switch style {
-        case .line: return 10
+    @State private var hovering = false
+
+    private var knobWidth: CGFloat {
+        switch knobStyle {
+        case .none: return 0
+        case .bar:  return 5
         case .glass: return 14
-        default: return 13
+        default:    return 13
+        }
+    }
+
+    private var knobHeight: CGFloat {
+        switch knobStyle {
+        case .none: return 0
+        case .bar:  return 15
+        case .glass: return 14
+        default:    return 13
         }
     }
 
@@ -27,6 +42,10 @@ struct VolumeSliderControl: View {
         case .segmented: return 6
         default: return 5
         }
+    }
+
+    private var knobVisible: Bool {
+        knobStyle != .none && (!hideKnobWhenIdle || hovering)
     }
 
     var body: some View {
@@ -49,9 +68,11 @@ struct VolumeSliderControl: View {
         GeometryReader { geo in
             let w = geo.size.width
             let h = geo.size.height
-            let usable = max(1, w - knobSize)
+            // Keep the geometry stable whether or not the knob is visible.
+            let inset = max(knobWidth, 6)
+            let usable = max(1, w - inset)
             let v = min(1, max(0, value))
-            let knobX = knobSize / 2 + v * usable
+            let knobX = inset / 2 + v * usable
             let fillWidth = max(trackHeight, knobX)
 
             ZStack {
@@ -65,7 +86,7 @@ struct VolumeSliderControl: View {
 
                 if style == .segmented && steps > 1 {
                     ForEach(0..<steps, id: \.self) { i in
-                        let x = knobSize / 2 + CGFloat(i) / CGFloat(steps - 1) * usable
+                        let x = inset / 2 + CGFloat(i) / CGFloat(steps - 1) * usable
                         Circle()
                             .fill(.primary.opacity(0.35))
                             .frame(width: 2.5, height: 2.5)
@@ -73,22 +94,28 @@ struct VolumeSliderControl: View {
                     }
                 }
 
-                knobShape
-                    .frame(width: knobSize, height: knobSize)
-                    .position(x: knobX, y: h / 2)
+                if knobStyle != .none {
+                    knobShape
+                        .frame(width: knobWidth, height: knobHeight)
+                        .opacity(knobVisible ? 1 : 0)
+                        .position(x: knobX, y: h / 2)
+                }
             }
+            .animation(.easeInOut(duration: 0.15), value: hovering)
             .contentShape(Rectangle())
+            .onHover { hovering = $0 }
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { g in
-                        let raw = (g.location.x - knobSize / 2) / usable
+                        hovering = true
+                        let raw = (g.location.x - inset / 2) / usable
                         value = snap(min(1, max(0, raw)))
                     }
             )
         }
     }
 
-    // MARK: - Style pieces
+    // MARK: - Track / fill
 
     @ViewBuilder private var trackShape: some View {
         switch style {
@@ -114,15 +141,27 @@ struct VolumeSliderControl: View {
         }
     }
 
+    // MARK: - Knob
+
     @ViewBuilder private var knobShape: some View {
-        switch style {
+        switch knobStyle {
+        case .none:
+            EmptyView()
         case .glass:
             Circle().fill(.clear).glassEffect(.regular, in: Circle())
                 .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5))
-        case .line:
+        case .tinted:
             Circle().fill(tint)
-                .overlay(Circle().strokeBorder(.white.opacity(0.7), lineWidth: 0.5))
-        default:
+                .overlay(Circle().strokeBorder(.white.opacity(0.85), lineWidth: 1))
+                .shadow(color: .black.opacity(0.2), radius: 1, y: 0.5)
+        case .ring:
+            Circle().fill(.white.opacity(0.001))      // keep the hit area
+                .overlay(Circle().strokeBorder(.white, lineWidth: 2.5))
+                .shadow(color: .black.opacity(0.25), radius: 1, y: 0.5)
+        case .bar:
+            Capsule().fill(.white)
+                .shadow(color: .black.opacity(0.3), radius: 1.5, y: 0.5)
+        case .circle:
             Circle().fill(.white)
                 .overlay(Circle().strokeBorder(.black.opacity(0.06), lineWidth: 0.5))
                 .shadow(color: .black.opacity(0.25), radius: 1.5, y: 0.5)

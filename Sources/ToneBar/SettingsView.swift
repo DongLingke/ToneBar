@@ -73,6 +73,16 @@ struct SettingsView: View {
                 }
             }
 
+            Picker("旋钮样式", selection: $prefs.knobStyle) {
+                ForEach(KnobStyle.allCases) { style in
+                    Text(style.label).tag(style)
+                }
+            }
+            .disabled(prefs.sliderStyle == .system)
+
+            Toggle("仅在悬停时显示旋钮", isOn: $prefs.hideKnobWhenIdle)
+                .disabled(prefs.sliderStyle == .system || prefs.knobStyle == .none)
+
             Picker("强调色", selection: $prefs.tint) {
                 ForEach(TintChoice.allCases) { choice in
                     HStack {
