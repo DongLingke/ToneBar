@@ -18,6 +18,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp "$BINPATH" "$APP/Contents/MacOS/$BIN"
+[ -f Resources/AppIcon.icns ] && cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 echo "▸ Ad-hoc signing…"
 codesign --force --sign - "$APP" >/dev/null 2>&1 || echo "  (codesign skipped)"

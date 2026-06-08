@@ -5,6 +5,8 @@ Package.resolved
 
 # Build output
 *.app/
+*.dmg
+.dmg_staging/
 
 # macOS
 .DS_Store

@@ -38,6 +38,21 @@ Install it permanently:
 cp -R ToneBar.app /Applications/
 ```
 
+## Packaging a DMG
+
+```bash
+./build.sh        # build the app
+./make_dmg.sh     # produces ToneBar-1.0.dmg (app + Applications shortcut)
+```
+
+The app icon is generated from `Scripts/makeicon.swift` into
+`Resources/AppIcon.icns` (rounded macOS squircle).
+
+> **Gatekeeper:** the build is ad-hoc signed, not notarized. Running it
+> straight from the mounted DMG (a local file) works. If macOS blocks it with
+> *"cannot be opened because Apple cannot check it,"* right-click the app →
+> **Open** once, or run `xattr -dr com.apple.quarantine /Applications/ToneBar.app`.
+
 > Launch-at-login works most reliably when the app lives in `/Applications`
 > and has been opened once. For ad-hoc dev builds you may need to approve it
 > under **System Settings → General → Login Items**.
