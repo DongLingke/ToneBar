@@ -177,19 +177,21 @@ final class Preferences: ObservableObject {
     }
 
     private init() {
-        iconStyle = IconStyle(rawValue: store.string(forKey: Keys.iconStyle) ?? "") ?? .waves
-        sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .capsule
-        knobStyle = KnobStyle(rawValue: store.string(forKey: Keys.knobStyle) ?? "") ?? .circle
+        // Factory defaults reflect the curated out-of-the-box look:
+        // no icon · segmented track · bar knob · 85pt · 11 steps · glass on.
+        iconStyle = IconStyle(rawValue: store.string(forKey: Keys.iconStyle) ?? "") ?? .none
+        sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .segmented
+        knobStyle = KnobStyle(rawValue: store.string(forKey: Keys.knobStyle) ?? "") ?? .bar
         hideKnobWhenIdle = store.object(forKey: Keys.hideKnobWhenIdle) as? Bool ?? false
-        sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 120
+        sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 85
 
         // Normalize persisted step counts into the supported 5...20 range
         // (0 stays "continuous").
-        let rawSteps = store.object(forKey: Keys.steps) as? Int ?? 0
+        let rawSteps = store.object(forKey: Keys.steps) as? Int ?? 11
         steps = rawSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
                                         max(Preferences.stepRange.lowerBound, rawSteps))
 
-        showPercentage = store.object(forKey: Keys.showPercentage) as? Bool ?? true
+        showPercentage = store.object(forKey: Keys.showPercentage) as? Bool ?? false
         scrollToAdjust = store.object(forKey: Keys.scrollToAdjust) as? Bool ?? true
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
         tint = TintChoice(rawValue: store.string(forKey: Keys.tint) ?? "") ?? .system
