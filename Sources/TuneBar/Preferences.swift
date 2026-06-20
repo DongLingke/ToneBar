@@ -214,9 +214,6 @@ final class Preferences: ObservableObject {
     @Published var showPercentage: Bool {
         didSet { store.set(showPercentage, forKey: Keys.showPercentage) }
     }
-    @Published var scrollToAdjust: Bool {
-        didSet { store.set(scrollToAdjust, forKey: Keys.scrollToAdjust) }
-    }
     @Published var glassBackground: Bool {
         didSet { store.set(glassBackground, forKey: Keys.glassBackground) }
     }
@@ -227,15 +224,21 @@ final class Preferences: ObservableObject {
     @Published var sliderLayout: SliderLayout {
         didSet { store.set(sliderLayout.rawValue, forKey: Keys.sliderLayout) }
     }
+    // Volume channel — enable + per-channel scroll.
+    @Published var showVolume: Bool {
+        didSet { store.set(showVolume, forKey: Keys.showVolume) }
+    }
     @Published var volumeControl: ControlStyle {
         didSet { store.set(volumeControl.rawValue, forKey: Keys.volumeControl) }
     }
-    /// Invert scroll direction (scroll up = decrease).
-    @Published var invertScroll: Bool {
-        didSet { store.set(invertScroll, forKey: Keys.invertScroll) }
+    @Published var volumeScroll: Bool {
+        didSet { store.set(volumeScroll, forKey: Keys.volumeScroll) }
+    }
+    @Published var invertVolumeScroll: Bool {
+        didSet { store.set(invertVolumeScroll, forKey: Keys.invertVolumeScroll) }
     }
 
-    // Brightness slider (optional second slider) — independent styling.
+    // Brightness channel — enable + independent styling + per-channel scroll.
     @Published var showBrightness: Bool {
         didSet { store.set(showBrightness, forKey: Keys.showBrightness) }
     }
@@ -256,6 +259,15 @@ final class Preferences: ObservableObject {
     }
     @Published var brightnessHideKnobWhenIdle: Bool {
         didSet { store.set(brightnessHideKnobWhenIdle, forKey: Keys.brightnessHideKnobWhenIdle) }
+    }
+    @Published var brightnessSteps: Int {
+        didSet { store.set(brightnessSteps, forKey: Keys.brightnessSteps) }
+    }
+    @Published var brightnessScroll: Bool {
+        didSet { store.set(brightnessScroll, forKey: Keys.brightnessScroll) }
+    }
+    @Published var invertBrightnessScroll: Bool {
+        didSet { store.set(invertBrightnessScroll, forKey: Keys.invertBrightnessScroll) }
     }
 
     @Published var launchAtLogin: Bool {
@@ -278,13 +290,19 @@ final class Preferences: ObservableObject {
                                         max(Preferences.stepRange.lowerBound, rawSteps))
 
         showPercentage = store.object(forKey: Keys.showPercentage) as? Bool ?? false
-        scrollToAdjust = store.object(forKey: Keys.scrollToAdjust) as? Bool ?? true
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
         tint = TintChoice(rawValue: store.string(forKey: Keys.tint) ?? "") ?? .system
 
         sliderLayout = SliderLayout(rawValue: store.string(forKey: Keys.sliderLayout) ?? "") ?? .horizontal
+
+        // Migrate the previously-shared scroll settings into per-channel ones.
+        let legacyScroll = store.object(forKey: "scrollToAdjust") as? Bool
+        let legacyInvert = store.object(forKey: "invertScroll") as? Bool
+
+        showVolume = store.object(forKey: Keys.showVolume) as? Bool ?? true
         volumeControl = ControlStyle(rawValue: store.string(forKey: Keys.volumeControl) ?? "") ?? .bar
-        invertScroll = store.object(forKey: Keys.invertScroll) as? Bool ?? false
+        volumeScroll = store.object(forKey: Keys.volumeScroll) as? Bool ?? legacyScroll ?? true
+        invertVolumeScroll = store.object(forKey: Keys.invertVolumeScroll) as? Bool ?? legacyInvert ?? false
 
         showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
         brightnessControl = ControlStyle(rawValue: store.string(forKey: Keys.brightnessControl) ?? "") ?? .bar
@@ -293,20 +311,34 @@ final class Preferences: ObservableObject {
         brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
         brightnessSliderWidth = (store.object(forKey: Keys.brightnessSliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 85
         brightnessHideKnobWhenIdle = store.object(forKey: Keys.brightnessHideKnobWhenIdle) as? Bool ?? false
+        let rawBriSteps = store.object(forKey: Keys.brightnessSteps) as? Int ?? 0
+        brightnessSteps = rawBriSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
+                                                     max(Preferences.stepRange.lowerBound, rawBriSteps))
+        brightnessScroll = store.object(forKey: Keys.brightnessScroll) as? Bool ?? legacyScroll ?? true
+        invertBrightnessScroll = store.object(forKey: Keys.invertBrightnessScroll) as? Bool ?? legacyInvert ?? false
 
         launchAtLogin = LaunchAtLogin.isEnabled
     }
 
-    /// Snap a 0...1 value to the configured number of steps.
-    func snap(_ value: Double) -> Double {
+    /// Snap a 0...1 value to the given number of steps (0/1 == continuous).
+    func snap(_ value: Double, steps: Int) -> Double {
         guard steps > 1 else { return value }
         let divisions = Double(steps - 1)
         return (value * divisions).rounded() / divisions
     }
 
-    /// The increment applied per scroll/keyboard nudge.
-    var nudgeAmount: Double {
+    func snap(_ value: Double) -> Double { snap(value, steps: steps) }
+
+    /// The increment applied per scroll/keyboard nudge for a step count.
+    func nudgeAmount(steps: Int) -> Double {
         steps > 1 ? 1.0 / Double(steps - 1) : 0.0625   // 1/16 for continuous
+    }
+
+    var nudgeAmount: Double { nudgeAmount(steps: steps) }
+
+    /// Whether scrolling adjusts anything (used to decide event interception).
+    var anyScrollEnabled: Bool {
+        (showVolume && volumeScroll) || (showBrightness && brightnessScroll)
     }
 
     private enum Keys {
@@ -317,12 +349,13 @@ final class Preferences: ObservableObject {
         static let sliderWidth = "sliderWidth"
         static let steps = "steps"
         static let showPercentage = "showPercentage"
-        static let scrollToAdjust = "scrollToAdjust"
         static let glassBackground = "glassBackground"
         static let tint = "tint"
         static let sliderLayout = "sliderLayout"
+        static let showVolume = "showVolume"
         static let volumeControl = "volumeControl"
-        static let invertScroll = "invertScroll"
+        static let volumeScroll = "volumeScroll"
+        static let invertVolumeScroll = "invertVolumeScroll"
         static let showBrightness = "showBrightness"
         static let brightnessControl = "brightnessControl"
         static let brightnessSliderStyle = "brightnessSliderStyle"
@@ -330,5 +363,8 @@ final class Preferences: ObservableObject {
         static let brightnessTint = "brightnessTint"
         static let brightnessSliderWidth = "brightnessSliderWidth"
         static let brightnessHideKnobWhenIdle = "brightnessHideKnobWhenIdle"
+        static let brightnessSteps = "brightnessSteps"
+        static let brightnessScroll = "brightnessScroll"
+        static let invertBrightnessScroll = "invertBrightnessScroll"
     }
 }

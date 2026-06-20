@@ -6,19 +6,15 @@ struct SettingsView: View {
     @ObservedObject var brightness: BrightnessController
     @ObservedObject var prefs = Preferences.shared
 
-    private var briOn: Bool { prefs.showBrightness }
-
     var body: some View {
         Form {
             previewSection
             channelSection
-            stepsSection
             generalAppearanceSection
-            behaviorSection
             generalSection
         }
         .formStyle(.grouped)
-        .frame(width: 660)
+        .frame(width: 680)
         .frame(minHeight: 640)
         .scrollContentBackground(.hidden)
         .background(.ultraThinMaterial)
@@ -64,70 +60,22 @@ struct SettingsView: View {
 
     private var channelSection: some View {
         Section {
-            Toggle("显示屏幕亮度（第二条）", isOn: $prefs.showBrightness)
-            if briOn {
+            ChannelGrid()
+
+            if prefs.showVolume && prefs.showBrightness {
                 Picker("两条排列", selection: $prefs.sliderLayout) {
                     ForEach(SliderLayout.allCases) { Text($0.label).tag($0) }
                 }
             }
-
-            ChannelGrid()
-
-            if briOn && !brightness.available {
+            if prefs.showBrightness && !brightness.available {
                 Label("当前没有可调节亮度的内置显示器", systemImage: "exclamationmark.triangle")
                     .font(.callout).foregroundStyle(.secondary)
             }
         } header: {
             Text("控件 · 音量与亮度")
         } footer: {
-            Text("左列为音量、右列为亮度，可分别设置。选「旋钮」时该列不再显示滑条样式、滑块旋钮、宽度等选项。")
+            Text("左列音量、右列亮度，分别设置。选「旋钮」时该列不再显示滑条样式、宽度等选项。档位 5–20，例如 5 档为 0·25·50·75·100。")
         }
-    }
-
-    // MARK: - Steps (volume only)
-
-    private var snapEnabled: Binding<Bool> {
-        Binding(
-            get: { prefs.steps >= Preferences.stepRange.lowerBound },
-            set: { on in prefs.steps = on ? max(Preferences.stepRange.lowerBound, prefs.steps) : 0 }
-        )
-    }
-
-    private var stepCount: Binding<Int> {
-        Binding(
-            get: { max(Preferences.stepRange.lowerBound, prefs.steps) },
-            set: { prefs.steps = min(Preferences.stepRange.upperBound,
-                                     max(Preferences.stepRange.lowerBound, $0)) }
-        )
-    }
-
-    private var stepsSection: some View {
-        Section {
-            Toggle("音量吸附到固定档位", isOn: snapEnabled)
-            if prefs.steps >= Preferences.stepRange.lowerBound {
-                Stepper(value: stepCount, in: Preferences.stepRange) {
-                    HStack {
-                        Text("档位数量")
-                        Spacer()
-                        Text("\(prefs.steps) 档").foregroundStyle(.secondary).monospacedDigit()
-                    }
-                }
-                Text(stepPreview)
-                    .font(.callout).foregroundStyle(.secondary).monospacedDigit().lineLimit(2)
-            }
-        } header: {
-            Text("音量档位")
-        } footer: {
-            Text("仅作用于音量。可设 5–20 档，例如 5 档为 0 · 25 · 50 · 75 · 100。亮度始终连续。")
-        }
-    }
-
-    private var stepPreview: String {
-        let n = prefs.steps
-        guard n > 1 else { return "" }
-        return (0..<n)
-            .map { String(Int((Double($0) / Double(n - 1) * 100).rounded())) }
-            .joined(separator: " · ")
     }
 
     // MARK: - General appearance (shared)
@@ -139,20 +87,6 @@ struct SettingsView: View {
             }
             Toggle("显示百分比", isOn: $prefs.showPercentage)
             Toggle("玻璃背景", isOn: $prefs.glassBackground)
-        }
-    }
-
-    // MARK: - Behavior
-
-    private var behaviorSection: some View {
-        Section {
-            Toggle("在控件上滚动以调节", isOn: $prefs.scrollToAdjust)
-            Toggle("反转滚动方向", isOn: $prefs.invertScroll)
-                .disabled(!prefs.scrollToAdjust)
-        } header: {
-            Text("行为")
-        } footer: {
-            Text("反转后，向上滚动为减小、向下滚动为增大。")
         }
     }
 
@@ -195,11 +129,12 @@ struct ChannelGrid: View {
 
     @ObservedObject var prefs = Preferences.shared
 
-    private var volBar: Bool { prefs.volumeControl == .bar }
-    private var briBar: Bool { prefs.brightnessControl == .bar }
+    private var volOn: Bool { prefs.showVolume }
     private var briOn: Bool { prefs.showBrightness }
+    private var volBar: Bool { volOn && prefs.volumeControl == .bar }
+    private var briBar: Bool { briOn && prefs.brightnessControl == .bar }
     private var volKnobRow: Bool { volBar && prefs.sliderStyle != .system }
-    private var briKnobRow: Bool { briOn && briBar && prefs.brightnessSliderStyle != .system }
+    private var briKnobRow: Bool { briBar && prefs.brightnessSliderStyle != .system }
 
     var body: some View {
         Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
@@ -207,29 +142,37 @@ struct ChannelGrid: View {
                 Color.clear.frame(width: 1, height: 1)
                 Label("音量", systemImage: "speaker.wave.2.fill")
                     .font(.headline).gridColumnAlignment(.leading)
+                    .foregroundStyle(volOn ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
                 Label("亮度", systemImage: "sun.max.fill")
                     .font(.headline).gridColumnAlignment(.leading)
                     .foregroundStyle(briOn ? AnyShapeStyle(.primary) : AnyShapeStyle(.tertiary))
             }
             Divider().gridCellColumns(3)
 
+            // Enable — always interactive
+            GridRow {
+                rowLabel("启用")
+                Toggle("", isOn: $prefs.showVolume).labelsHidden()
+                Toggle("", isOn: $prefs.showBrightness).labelsHidden()
+            }
+
             GridRow {
                 rowLabel("控件")
-                controlPicker($prefs.volumeControl)
+                cell(volOn) { controlPicker($prefs.volumeControl) }
                 cell(briOn) { controlPicker($prefs.brightnessControl) }
             }
 
             GridRow {
                 rowLabel("强调色")
-                tintPicker($prefs.tint)
+                cell(volOn) { tintPicker($prefs.tint) }
                 cell(briOn) { tintPicker($prefs.brightnessTint) }
             }
 
-            if volBar || (briOn && briBar) {
+            if volBar || briBar {
                 GridRow {
                     rowLabel("滑条样式")
                     cell(volBar) { sliderStylePicker($prefs.sliderStyle) }
-                    cell(briOn && briBar) { sliderStylePicker($prefs.brightnessSliderStyle) }
+                    cell(briBar) { sliderStylePicker($prefs.brightnessSliderStyle) }
                 }
             }
 
@@ -253,11 +196,33 @@ struct ChannelGrid: View {
                 }
             }
 
-            if volBar || (briOn && briBar) {
+            if volBar || briBar {
                 GridRow {
                     rowLabel("滑条宽度")
                     cell(volBar) { widthSlider($prefs.sliderWidth) }
-                    cell(briOn && briBar) { widthSlider($prefs.brightnessSliderWidth) }
+                    cell(briBar) { widthSlider($prefs.brightnessSliderWidth) }
+                }
+            }
+
+            if volOn || briOn {
+                GridRow {
+                    rowLabel("吸附档位")
+                    cell(volOn) { stepsPicker($prefs.steps) }
+                    cell(briOn) { stepsPicker($prefs.brightnessSteps) }
+                }
+                GridRow {
+                    rowLabel("滚动调节")
+                    cell(volOn) { Toggle("", isOn: $prefs.volumeScroll).labelsHidden() }
+                    cell(briOn) { Toggle("", isOn: $prefs.brightnessScroll).labelsHidden() }
+                }
+                GridRow {
+                    rowLabel("反转滚动")
+                    cell(volOn && prefs.volumeScroll) {
+                        Toggle("", isOn: $prefs.invertVolumeScroll).labelsHidden()
+                    }
+                    cell(briOn && prefs.brightnessScroll) {
+                        Toggle("", isOn: $prefs.invertBrightnessScroll).labelsHidden()
+                    }
                 }
             }
         }
@@ -284,6 +249,13 @@ struct ChannelGrid: View {
     private func knobPicker(_ sel: Binding<KnobStyle>) -> some View {
         Picker("", selection: sel) { ForEach(KnobStyle.allCases) { Text($0.label).tag($0) } }
             .labelsHidden().pickerStyle(.menu).fixedSize()
+    }
+    private func stepsPicker(_ sel: Binding<Int>) -> some View {
+        Picker("", selection: sel) {
+            Text("连续").tag(0)
+            ForEach(Array(Preferences.stepRange), id: \.self) { Text("\($0) 档").tag($0) }
+        }
+        .labelsHidden().pickerStyle(.menu).fixedSize()
     }
     private func tintPicker(_ sel: Binding<TintChoice>) -> some View {
         Picker("", selection: sel) {

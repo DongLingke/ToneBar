@@ -10,7 +10,7 @@ final class StatusHostingView<Content: View>: NSHostingView<Content> {
     var onRightClick: ((NSEvent) -> Void)?
 
     override func scrollWheel(with event: NSEvent) {
-        guard Preferences.shared.scrollToAdjust else {
+        guard Preferences.shared.anyScrollEnabled else {
             super.scrollWheel(with: event)
             return
         }
@@ -89,23 +89,35 @@ final class MenuBarController: NSObject {
     // MARK: - Scroll
 
     private func handleScroll(_ delta: CGFloat) {
-        // Brightness is always continuous; volume may be stepped.
-        let brightnessTarget = prefs.showBrightness && scrollTarget == .brightness
-        let d = Double(delta) * (prefs.invertScroll ? -1.0 : 1.0)
-        scrollAccumulator += d
+        let toBrightness = prefs.showBrightness && scrollTarget == .brightness
 
-        if !brightnessTarget && prefs.steps > 1 {
+        if toBrightness {
+            guard prefs.brightnessScroll else { return }
+            let d = Double(delta) * (prefs.invertBrightnessScroll ? -1.0 : 1.0)
+            adjust(steps: prefs.brightnessSteps, delta: d,
+                   current: brightness.brightness,
+                   apply: { brightness.setBrightness($0) })
+        } else {
+            guard prefs.showVolume, prefs.volumeScroll else { return }
+            let d = Double(delta) * (prefs.invertVolumeScroll ? -1.0 : 1.0)
+            adjust(steps: prefs.steps, delta: d,
+                   current: audio.volume,
+                   apply: { audio.setVolume($0) })
+        }
+    }
+
+    /// Shared scroll handling: stepped channels move one notch per gesture tick,
+    /// continuous ones move proportionally.
+    private func adjust(steps: Int, delta: Double, current: Double, apply: (Double) -> Void) {
+        if steps > 1 {
+            scrollAccumulator += delta
             let threshold = 4.0
             guard abs(scrollAccumulator) >= threshold else { return }
             let direction = scrollAccumulator > 0 ? 1.0 : -1.0
-            audio.setVolume(prefs.snap(audio.volume + direction * prefs.nudgeAmount))
+            apply(prefs.snap(current + direction * prefs.nudgeAmount(steps: steps), steps: steps))
             scrollAccumulator = 0
         } else {
-            if brightnessTarget {
-                brightness.nudge(by: d * 0.005)
-            } else {
-                audio.setVolume(audio.volume + d * 0.005)
-            }
+            apply(current + delta * 0.005)
             scrollAccumulator = 0
         }
     }

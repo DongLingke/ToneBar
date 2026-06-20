@@ -12,7 +12,8 @@ struct MenuSliderView: View {
     /// Tells the status item which control the scroll wheel should drive.
     var setScrollTarget: (ScrollTarget) -> Void = { _ in }
 
-    private var stacked: Bool { prefs.showBrightness && prefs.sliderLayout == .vertical }
+    private var bothShown: Bool { prefs.showVolume && prefs.showBrightness }
+    private var stacked: Bool { bothShown && prefs.sliderLayout == .vertical }
     private var rowHeight: CGFloat { stacked ? 10 : 18 }
     private var compact: Bool { stacked }
 
@@ -32,7 +33,7 @@ struct MenuSliderView: View {
     }
 
     @ViewBuilder private var container: some View {
-        if prefs.showBrightness {
+        if bothShown {
             if stacked {
                 VStack(spacing: 1) { volumeChannel; brightnessChannel }
             } else {
@@ -42,8 +43,16 @@ struct MenuSliderView: View {
                     brightnessChannel
                 }
             }
-        } else {
+        } else if prefs.showVolume {
             volumeChannel
+        } else if prefs.showBrightness {
+            brightnessChannel
+        } else {
+            // Nothing enabled — keep a small target so the menu is reachable.
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 18)
         }
     }
 
@@ -88,9 +97,9 @@ struct MenuSliderView: View {
                 knobStyle: prefs.brightnessKnobStyle,
                 width: prefs.brightnessSliderWidth,
                 hideKnob: prefs.brightnessHideKnobWhenIdle,
-                steps: 0,                       // brightness is continuous
+                steps: prefs.brightnessSteps,
                 muted: !brightness.available,
-                snap: { $0 },
+                snap: { prefs.snap($0, steps: prefs.brightnessSteps) },
                 target: .brightness
             )
             percentage(brightness.brightness)
