@@ -13,6 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async { NSApp.terminate(nil) }
             return
         }
+        if CommandLine.arguments.contains("--render-settings") {
+            PreviewRenderer.renderSettings(to: "/tmp/tunebar_settings.png")
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+            return
+        }
 
         // Menu-bar agent: no Dock icon, no main window.
         NSApp.setActivationPolicy(.accessory)

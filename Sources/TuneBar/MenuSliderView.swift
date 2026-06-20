@@ -60,6 +60,8 @@ struct MenuSliderView: View {
                 tint: prefs.tint.resolved,
                 sliderStyle: prefs.sliderStyle,
                 knobStyle: prefs.knobStyle,
+                width: prefs.sliderWidth,
+                hideKnob: prefs.hideKnobWhenIdle,
                 steps: prefs.steps,
                 muted: audio.muted,
                 snap: { prefs.snap($0) },
@@ -84,6 +86,8 @@ struct MenuSliderView: View {
                 tint: prefs.brightnessTint.resolved,
                 sliderStyle: prefs.brightnessSliderStyle,
                 knobStyle: prefs.brightnessKnobStyle,
+                width: prefs.brightnessSliderWidth,
+                hideKnob: prefs.brightnessHideKnobWhenIdle,
                 steps: 0,                       // brightness is continuous
                 muted: !brightness.available,
                 snap: { $0 },
@@ -97,7 +101,8 @@ struct MenuSliderView: View {
 
     @ViewBuilder
     private func control(value: Binding<Double>, style: ControlStyle, tint: Color,
-                         sliderStyle: SliderStyle, knobStyle: KnobStyle, steps: Int,
+                         sliderStyle: SliderStyle, knobStyle: KnobStyle,
+                         width: CGFloat, hideKnob: Bool, steps: Int,
                          muted: Bool, snap: @escaping (Double) -> Double,
                          target: ScrollTarget) -> some View {
         if let dial = style.dial {
@@ -113,11 +118,11 @@ struct MenuSliderView: View {
         } else {
             VolumeSliderControl(
                 value: value,
-                width: prefs.sliderWidth,
+                width: width,
                 tint: tint,
                 style: sliderStyle,
                 knobStyle: knobStyle,
-                hideKnobWhenIdle: prefs.hideKnobWhenIdle,
+                hideKnobWhenIdle: hideKnob,
                 steps: steps,
                 muted: muted,
                 snap: snap,

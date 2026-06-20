@@ -7,6 +7,27 @@ import AppKit
 enum PreviewRenderer {
 
     @MainActor
+    static func renderSettings(to path: String) {
+        // Demo state (only touches this bare binary's defaults domain, never the
+        // installed app): volume as a dial, brightness as a bar, to show that a
+        // dial column drops its slider-only rows.
+        let p = Preferences.shared
+        p.showBrightness = true
+        p.volumeControl = .dialRealistic
+        p.brightnessControl = .bar
+        let view = ChannelGrid()
+            .padding(20)
+            .frame(width: 620, alignment: .leading)
+            .background(Color(white: 0.14))
+            .environment(\.colorScheme, .dark)
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+        guard let cg = renderer.cgImage else { return }
+        let rep = NSBitmapImageRep(cgImage: cg)
+        try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+    }
+
+    @MainActor
     static func render(to path: String) {
         let view = PreviewSheet().frame(width: 720).padding(16).background(Color(white: 0.12))
         let renderer = ImageRenderer(content: view)

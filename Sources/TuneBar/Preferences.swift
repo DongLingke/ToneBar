@@ -251,6 +251,12 @@ final class Preferences: ObservableObject {
     @Published var brightnessTint: TintChoice {
         didSet { store.set(brightnessTint.rawValue, forKey: Keys.brightnessTint) }
     }
+    @Published var brightnessSliderWidth: Double {
+        didSet { store.set(brightnessSliderWidth, forKey: Keys.brightnessSliderWidth) }
+    }
+    @Published var brightnessHideKnobWhenIdle: Bool {
+        didSet { store.set(brightnessHideKnobWhenIdle, forKey: Keys.brightnessHideKnobWhenIdle) }
+    }
 
     @Published var launchAtLogin: Bool {
         didSet { LaunchAtLogin.isEnabled = launchAtLogin }
@@ -285,6 +291,8 @@ final class Preferences: ObservableObject {
         brightnessSliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.brightnessSliderStyle) ?? "") ?? .capsule
         brightnessKnobStyle = KnobStyle(rawValue: store.string(forKey: Keys.brightnessKnobStyle) ?? "") ?? .circle
         brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
+        brightnessSliderWidth = (store.object(forKey: Keys.brightnessSliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 85
+        brightnessHideKnobWhenIdle = store.object(forKey: Keys.brightnessHideKnobWhenIdle) as? Bool ?? false
 
         launchAtLogin = LaunchAtLogin.isEnabled
     }
@@ -320,5 +328,7 @@ final class Preferences: ObservableObject {
         static let brightnessSliderStyle = "brightnessSliderStyle"
         static let brightnessKnobStyle = "brightnessKnobStyle"
         static let brightnessTint = "brightnessTint"
+        static let brightnessSliderWidth = "brightnessSliderWidth"
+        static let brightnessHideKnobWhenIdle = "brightnessHideKnobWhenIdle"
     }
 }
