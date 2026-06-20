@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ToneBar</string>
+    <string>TuneBar</string>
     <key>CFBundleDevelopmentRegion</key>
     <string>zh-Hans</string>
     <key>CFBundleLocalizations</key>
@@ -12,9 +12,9 @@
         <string>en</string>
     </array>
     <key>CFBundleDisplayName</key>
-    <string>音条 ToneBar</string>
+    <string>调条 TuneBar</string>
     <key>CFBundleIdentifier</key>
-    <string>com.donglingke.tonebar</string>
+    <string>com.donglingke.tunebar</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>
@@ -22,7 +22,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
-    <string>ToneBar</string>
+    <string>TuneBar</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIconName</key>
@@ -36,6 +36,6 @@
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>音条 ToneBar</string>
+    <string>调条 TuneBar</string>
 </dict>
 </plist>

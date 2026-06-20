@@ -38,7 +38,7 @@ struct SettingsView: View {
                                 .fill(prefs.tint.resolved)
                         }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("音条 ToneBar").font(.headline)
+                        Text("调条 TuneBar").font(.headline)
                         Text("常驻菜单栏的音量滑条")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -264,7 +264,7 @@ struct SettingsView: View {
             Button(role: .destructive) {
                 NSApp.terminate(nil)
             } label: {
-                Text("退出 音条 ToneBar")
+                Text("退出 调条 TuneBar")
             }
         }
     }
@@ -293,7 +293,7 @@ final class SettingsWindowController {
         if window == nil {
             let hosting = NSHostingController(rootView: SettingsView(audio: audio, brightness: brightness))
             let win = NSWindow(contentViewController: hosting)
-            win.title = "音条 ToneBar"
+            win.title = "调条 TuneBar"
             win.styleMask = [.titled, .closable, .fullSizeContentView]
             win.titlebarAppearsTransparent = true
             win.isMovableByWindowBackground = true

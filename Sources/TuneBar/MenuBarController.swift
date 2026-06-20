@@ -133,7 +133,7 @@ final class MenuBarController: NSObject {
         settings.target = self
         menu.addItem(settings)
 
-        let quit = NSMenuItem(title: "退出 音条 ToneBar", action: #selector(quit), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "退出 调条 TuneBar", action: #selector(quit), keyEquivalent: "q")
         quit.target = self
         menu.addItem(quit)
 

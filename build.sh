@@ -1,12 +1,12 @@
 #!/bin/bash
-# Build ToneBar and assemble a runnable .app bundle.
+# Build TuneBar and assemble a runnable .app bundle.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
 CONFIG="release"
-APP="ToneBar.app"
-BIN="ToneBar"
+APP="TuneBar.app"
+BIN="TuneBar"
 
 echo "▸ Compiling ($CONFIG)…"
 swift build -c "$CONFIG"

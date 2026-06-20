@@ -1,11 +1,11 @@
 #!/bin/bash
-# Package ToneBar.app into a styled "drag to Applications" .dmg installer.
+# Package TuneBar.app into a styled "drag to Applications" .dmg installer.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-APP="ToneBar.app"
-VOLNAME="音条 ToneBar"
-DMG="ToneBar-1.0.dmg"
+APP="TuneBar.app"
+VOLNAME="调条 TuneBar"
+DMG="TuneBar-1.0.dmg"
 RW=".rw.dmg"
 STAGING=".dmg_staging"
 MOUNT="/Volumes/$VOLNAME"

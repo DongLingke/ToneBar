@@ -1,4 +1,4 @@
-# 音条 ToneBar
+# 调条 TuneBar
 
 A macOS menu-bar app that puts a **real, draggable volume slider directly in the menu bar** — not an icon you have to click open. Built for macOS 26 (Tahoe) with the Liquid Glass look.
 
@@ -28,21 +28,21 @@ A macOS menu-bar app that puts a **real, draggable volume slider directly in the
 ## Build & run
 
 ```bash
-./build.sh          # compiles + assembles ToneBar.app
-open ToneBar.app    # launches it (look for the slider in your menu bar)
+./build.sh          # compiles + assembles TuneBar.app
+open TuneBar.app    # launches it (look for the slider in your menu bar)
 ```
 
 Install it permanently:
 
 ```bash
-cp -R ToneBar.app /Applications/
+cp -R TuneBar.app /Applications/
 ```
 
 ## Packaging a DMG
 
 ```bash
 ./build.sh        # build the app
-./make_dmg.sh     # produces ToneBar-1.0.dmg (app + Applications shortcut)
+./make_dmg.sh     # produces TuneBar-1.0.dmg (app + Applications shortcut)
 ```
 
 The app icon is generated from `Scripts/makeicon.swift` into
@@ -51,7 +51,7 @@ The app icon is generated from `Scripts/makeicon.swift` into
 > **Gatekeeper:** the build is ad-hoc signed, not notarized. Running it
 > straight from the mounted DMG (a local file) works. If macOS blocks it with
 > *"cannot be opened because Apple cannot check it,"* right-click the app →
-> **Open** once, or run `xattr -dr com.apple.quarantine /Applications/ToneBar.app`.
+> **Open** once, or run `xattr -dr com.apple.quarantine /Applications/TuneBar.app`.
 
 > Launch-at-login works most reliably when the app lives in `/Applications`
 > and has been opened once. For ad-hoc dev builds you may need to approve it

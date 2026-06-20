@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "ToneBar",
+    name: "TuneBar",
     platforms: [
         .macOS("26.0")
     ],
     targets: [
         .executableTarget(
-            name: "ToneBar",
-            path: "Sources/ToneBar",
+            name: "TuneBar",
+            path: "Sources/TuneBar",
             swiftSettings: [
                 // Keep Swift 5 language mode so the CoreAudio C callbacks and
                 // ObservableObject plumbing don't trip strict-concurrency errors.
