@@ -19,6 +19,36 @@ enum PreviewRenderer {
 
 private struct PreviewSheet: View {
     var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            dualMock
+            stylesGrid
+        }
+    }
+
+    /// Mock of the menu-bar item with both sliders, each independently styled.
+    private var dualMock: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("菜单栏效果（音量 + 亮度，样式独立）")
+                .font(.system(size: 12, weight: .bold)).foregroundStyle(.white.opacity(0.6))
+            HStack(spacing: 8) {
+                Image(systemName: "speaker.wave.2.fill")
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white).frame(width: 16)
+                VolumeSliderControl(value: .constant(0.6), width: 110, tint: .blue,
+                                    style: .segmented, knobStyle: .bar, hideKnobWhenIdle: false,
+                                    steps: 11, muted: false, snap: { $0 })
+                Divider().frame(height: 13).overlay(Color.white.opacity(0.4))
+                Image(systemName: "sun.max.fill")
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white).frame(width: 16)
+                VolumeSliderControl(value: .constant(0.85), width: 110, tint: .orange,
+                                    style: .capsule, knobStyle: .circle, hideKnobWhenIdle: false,
+                                    steps: 0, muted: false, snap: { $0 })
+            }
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(Capsule().fill(Color.white.opacity(0.08)))
+        }
+    }
+
+    private var stylesGrid: some View {
         HStack(alignment: .top, spacing: 28) {
             column(title: "滑条样式") {
                 ForEach(SliderStyle.allCases) { style in

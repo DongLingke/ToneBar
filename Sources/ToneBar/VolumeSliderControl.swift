@@ -1,5 +1,11 @@
 import SwiftUI
 
+/// Which slider the scroll wheel should drive, based on what's hovered.
+enum ScrollTarget {
+    case volume
+    case brightness
+}
+
 /// A compact, fully custom volume slider that supports several visual styles
 /// for both the track and the knob. Handles its own drag gesture so it works
 /// inside the menu-bar status item.
@@ -14,6 +20,7 @@ struct VolumeSliderControl: View {
     var steps: Int
     var muted: Bool
     var snap: (Double) -> Double
+    var onHover: (Bool) -> Void = { _ in }
 
     @State private var hovering = false
 
@@ -103,11 +110,15 @@ struct VolumeSliderControl: View {
             }
             .animation(.easeInOut(duration: 0.15), value: hovering)
             .contentShape(Rectangle())
-            .onHover { hovering = $0 }
+            .onHover { inside in
+                hovering = inside
+                onHover(inside)
+            }
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { g in
                         hovering = true
+                        onHover(true)
                         let raw = (g.location.x - inset / 2) / usable
                         value = snap(min(1, max(0, raw)))
                     }

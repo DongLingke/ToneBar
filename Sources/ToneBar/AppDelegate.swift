@@ -3,6 +3,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var audio: AudioController!
+    private var brightness: BrightnessController!
     private var menuBar: MenuBarController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -17,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         audio = AudioController()
-        menuBar = MenuBarController(audio: audio)
+        brightness = BrightnessController()
+        menuBar = MenuBarController(audio: audio, brightness: brightness)
     }
 }

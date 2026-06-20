@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @ObservedObject var audio: AudioController
+    @ObservedObject var brightness: BrightnessController
     @ObservedObject var prefs = Preferences.shared
 
     var body: some View {
@@ -10,6 +11,7 @@ struct SettingsView: View {
             previewSection
             appearanceSection
             stepsSection
+            brightnessSection
             behaviorSection
             generalSection
         }
@@ -48,7 +50,7 @@ struct SettingsView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 11, style: .continuous)
                         .fill(.black.opacity(0.18))
-                    MenuSliderView(audio: audio)
+                    MenuSliderView(audio: audio, brightness: brightness)
                         .fixedSize()
                 }
                 .frame(height: 38)
@@ -163,6 +165,47 @@ struct SettingsView: View {
             .joined(separator: " · ")
     }
 
+    // MARK: - Brightness
+
+    private var brightnessSection: some View {
+        Section {
+            Toggle("显示屏幕亮度滑条", isOn: $prefs.showBrightness)
+
+            if prefs.showBrightness {
+                Picker("亮度滑条样式", selection: $prefs.brightnessSliderStyle) {
+                    ForEach(SliderStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+                Picker("亮度旋钮样式", selection: $prefs.brightnessKnobStyle) {
+                    ForEach(KnobStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+                .disabled(prefs.brightnessSliderStyle == .system)
+                Picker("亮度强调色", selection: $prefs.brightnessTint) {
+                    ForEach(TintChoice.allCases) { choice in
+                        HStack {
+                            Circle().fill(choice.resolved).frame(width: 12, height: 12)
+                            Text(choice.label)
+                        }
+                        .tag(choice)
+                    }
+                }
+
+                if !brightness.available {
+                    Label("当前没有可调节亮度的内置显示器", systemImage: "exclamationmark.triangle")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("亮度")
+        } footer: {
+            Text("在音量滑条旁再显示一个屏幕亮度滑条，可单独设置样式。仅支持内置显示器。")
+        }
+    }
+
     // MARK: - Behavior
 
     private var behaviorSection: some View {
@@ -212,15 +255,17 @@ struct SettingsView: View {
 final class SettingsWindowController {
 
     private let audio: AudioController
+    private let brightness: BrightnessController
     private var window: NSWindow?
 
-    init(audio: AudioController) {
+    init(audio: AudioController, brightness: BrightnessController) {
         self.audio = audio
+        self.brightness = brightness
     }
 
     func show() {
         if window == nil {
-            let hosting = NSHostingController(rootView: SettingsView(audio: audio))
+            let hosting = NSHostingController(rootView: SettingsView(audio: audio, brightness: brightness))
             let win = NSWindow(contentViewController: hosting)
             win.title = "音条 ToneBar"
             win.styleMask = [.titled, .closable, .fullSizeContentView]

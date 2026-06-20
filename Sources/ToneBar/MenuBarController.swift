@@ -30,6 +30,7 @@ final class StatusHostingView<Content: View>: NSHostingView<Content> {
 final class MenuBarController: NSObject {
 
     private let audio: AudioController
+    private let brightness: BrightnessController
     private let prefs = Preferences.shared
 
     private var statusItem: NSStatusItem!
@@ -37,9 +38,11 @@ final class MenuBarController: NSObject {
     private var cancellables = Set<AnyCancellable>()
     private var settingsController: SettingsWindowController?
     private var scrollAccumulator: Double = 0
+    private var scrollTarget: ScrollTarget = .volume
 
-    init(audio: AudioController) {
+    init(audio: AudioController, brightness: BrightnessController) {
         self.audio = audio
+        self.brightness = brightness
         super.init()
         installStatusItem()
         observePreferences()
@@ -51,7 +54,9 @@ final class MenuBarController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.behavior = .removalAllowed
 
-        let view = StatusHostingView(rootView: MenuSliderView(audio: audio))
+        let rootView = MenuSliderView(audio: audio, brightness: brightness,
+                                      setScrollTarget: { [weak self] in self?.scrollTarget = $0 })
+        let view = StatusHostingView(rootView: rootView)
         view.translatesAutoresizingMaskIntoConstraints = true
         view.onScroll = { [weak self] delta in self?.handleScroll(delta) }
         view.onRightClick = { [weak self] event in self?.showMenu(event) }
@@ -84,15 +89,22 @@ final class MenuBarController: NSObject {
     // MARK: - Scroll
 
     private func handleScroll(_ delta: CGFloat) {
+        // Brightness is always continuous; volume may be stepped.
+        let brightnessTarget = prefs.showBrightness && scrollTarget == .brightness
         scrollAccumulator += Double(delta)
-        if prefs.steps > 1 {
+
+        if !brightnessTarget && prefs.steps > 1 {
             let threshold = 4.0
             guard abs(scrollAccumulator) >= threshold else { return }
             let direction = scrollAccumulator > 0 ? 1.0 : -1.0
             audio.setVolume(prefs.snap(audio.volume + direction * prefs.nudgeAmount))
             scrollAccumulator = 0
         } else {
-            audio.setVolume(audio.volume + Double(delta) * 0.005)
+            if brightnessTarget {
+                brightness.nudge(by: Double(delta) * 0.005)
+            } else {
+                audio.setVolume(audio.volume + Double(delta) * 0.005)
+            }
             scrollAccumulator = 0
         }
     }
@@ -133,7 +145,7 @@ final class MenuBarController: NSObject {
 
     @objc private func openSettings() {
         if settingsController == nil {
-            settingsController = SettingsWindowController(audio: audio)
+            settingsController = SettingsWindowController(audio: audio, brightness: brightness)
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsController?.show()

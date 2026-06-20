@@ -172,6 +172,21 @@ final class Preferences: ObservableObject {
     @Published var tint: TintChoice {
         didSet { store.set(tint.rawValue, forKey: Keys.tint) }
     }
+
+    // Brightness slider (optional second slider) — independent styling.
+    @Published var showBrightness: Bool {
+        didSet { store.set(showBrightness, forKey: Keys.showBrightness) }
+    }
+    @Published var brightnessSliderStyle: SliderStyle {
+        didSet { store.set(brightnessSliderStyle.rawValue, forKey: Keys.brightnessSliderStyle) }
+    }
+    @Published var brightnessKnobStyle: KnobStyle {
+        didSet { store.set(brightnessKnobStyle.rawValue, forKey: Keys.brightnessKnobStyle) }
+    }
+    @Published var brightnessTint: TintChoice {
+        didSet { store.set(brightnessTint.rawValue, forKey: Keys.brightnessTint) }
+    }
+
     @Published var launchAtLogin: Bool {
         didSet { LaunchAtLogin.isEnabled = launchAtLogin }
     }
@@ -195,6 +210,12 @@ final class Preferences: ObservableObject {
         scrollToAdjust = store.object(forKey: Keys.scrollToAdjust) as? Bool ?? true
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
         tint = TintChoice(rawValue: store.string(forKey: Keys.tint) ?? "") ?? .system
+
+        showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
+        brightnessSliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.brightnessSliderStyle) ?? "") ?? .capsule
+        brightnessKnobStyle = KnobStyle(rawValue: store.string(forKey: Keys.brightnessKnobStyle) ?? "") ?? .circle
+        brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
+
         launchAtLogin = LaunchAtLogin.isEnabled
     }
 
@@ -221,5 +242,9 @@ final class Preferences: ObservableObject {
         static let scrollToAdjust = "scrollToAdjust"
         static let glassBackground = "glassBackground"
         static let tint = "tint"
+        static let showBrightness = "showBrightness"
+        static let brightnessSliderStyle = "brightnessSliderStyle"
+        static let brightnessKnobStyle = "brightnessKnobStyle"
+        static let brightnessTint = "brightnessTint"
     }
 }
