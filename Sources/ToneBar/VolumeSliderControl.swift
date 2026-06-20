@@ -21,34 +21,38 @@ struct VolumeSliderControl: View {
     var muted: Bool
     var snap: (Double) -> Double
     var onHover: (Bool) -> Void = { _ in }
+    /// Overall control height; shrink for the stacked (vertical) layout.
+    var height: CGFloat = 18
 
     @State private var hovering = false
 
     private var knobWidth: CGFloat {
         switch knobStyle {
         case .none: return 0
-        case .bar:  return 5
-        case .glass: return 14
-        default:    return 13
+        case .bar:  return min(5, height - 1)
+        case .glass: return min(14, height - 1)
+        default:    return min(13, height - 1)
         }
     }
 
     private var knobHeight: CGFloat {
         switch knobStyle {
         case .none: return 0
-        case .bar:  return 15
-        case .glass: return 14
-        default:    return 13
+        case .bar:  return min(15, height)
+        case .glass: return min(14, height - 1)
+        default:    return min(13, height - 1)
         }
     }
 
     private var trackHeight: CGFloat {
+        let base: CGFloat
         switch style {
-        case .line: return 3
-        case .glass: return 9
-        case .segmented: return 6
-        default: return 5
+        case .line: base = 3
+        case .glass: base = 9
+        case .segmented: base = 6
+        default: base = 5
         }
+        return min(base, height - 2)
     }
 
     private var knobVisible: Bool {
@@ -65,7 +69,7 @@ struct VolumeSliderControl: View {
                 custom
             }
         }
-        .frame(width: width, height: 18)
+        .frame(width: width, height: height)
         .opacity(muted ? 0.5 : 1)
     }
 

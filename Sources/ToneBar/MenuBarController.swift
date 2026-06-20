@@ -91,7 +91,8 @@ final class MenuBarController: NSObject {
     private func handleScroll(_ delta: CGFloat) {
         // Brightness is always continuous; volume may be stepped.
         let brightnessTarget = prefs.showBrightness && scrollTarget == .brightness
-        scrollAccumulator += Double(delta)
+        let d = Double(delta) * (prefs.invertScroll ? -1.0 : 1.0)
+        scrollAccumulator += d
 
         if !brightnessTarget && prefs.steps > 1 {
             let threshold = 4.0
@@ -101,9 +102,9 @@ final class MenuBarController: NSObject {
             scrollAccumulator = 0
         } else {
             if brightnessTarget {
-                brightness.nudge(by: Double(delta) * 0.005)
+                brightness.nudge(by: d * 0.005)
             } else {
-                audio.setVolume(audio.volume + Double(delta) * 0.005)
+                audio.setVolume(audio.volume + d * 0.005)
             }
             scrollAccumulator = 0
         }

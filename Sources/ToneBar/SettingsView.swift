@@ -69,21 +69,28 @@ struct SettingsView: View {
                 }
             }
 
+            Picker("音量控件", selection: $prefs.volumeControl) {
+                ForEach(ControlStyle.allCases) { style in
+                    Text(style.label).tag(style)
+                }
+            }
+
             Picker("滑条样式", selection: $prefs.sliderStyle) {
                 ForEach(SliderStyle.allCases) { style in
                     Text(style.label).tag(style)
                 }
             }
+            .disabled(prefs.volumeControl != .bar)
 
-            Picker("旋钮样式", selection: $prefs.knobStyle) {
+            Picker("滑块旋钮样式", selection: $prefs.knobStyle) {
                 ForEach(KnobStyle.allCases) { style in
                     Text(style.label).tag(style)
                 }
             }
-            .disabled(prefs.sliderStyle == .system)
+            .disabled(prefs.volumeControl != .bar || prefs.sliderStyle == .system)
 
             Toggle("仅在悬停时显示旋钮", isOn: $prefs.hideKnobWhenIdle)
-                .disabled(prefs.sliderStyle == .system || prefs.knobStyle == .none)
+                .disabled(prefs.volumeControl != .bar || prefs.sliderStyle == .system || prefs.knobStyle == .none)
 
             Picker("强调色", selection: $prefs.tint) {
                 ForEach(TintChoice.allCases) { choice in
@@ -172,17 +179,30 @@ struct SettingsView: View {
             Toggle("显示屏幕亮度滑条", isOn: $prefs.showBrightness)
 
             if prefs.showBrightness {
+                Picker("两条排列", selection: $prefs.sliderLayout) {
+                    ForEach(SliderLayout.allCases) { layout in
+                        Text(layout.label).tag(layout)
+                    }
+                }
+
+                Picker("亮度控件", selection: $prefs.brightnessControl) {
+                    ForEach(ControlStyle.allCases) { style in
+                        Text(style.label).tag(style)
+                    }
+                }
+
                 Picker("亮度滑条样式", selection: $prefs.brightnessSliderStyle) {
                     ForEach(SliderStyle.allCases) { style in
                         Text(style.label).tag(style)
                     }
                 }
-                Picker("亮度旋钮样式", selection: $prefs.brightnessKnobStyle) {
+                .disabled(prefs.brightnessControl != .bar)
+                Picker("亮度滑块旋钮样式", selection: $prefs.brightnessKnobStyle) {
                     ForEach(KnobStyle.allCases) { style in
                         Text(style.label).tag(style)
                     }
                 }
-                .disabled(prefs.brightnessSliderStyle == .system)
+                .disabled(prefs.brightnessControl != .bar || prefs.brightnessSliderStyle == .system)
                 Picker("亮度强调色", selection: $prefs.brightnessTint) {
                     ForEach(TintChoice.allCases) { choice in
                         HStack {
@@ -209,8 +229,14 @@ struct SettingsView: View {
     // MARK: - Behavior
 
     private var behaviorSection: some View {
-        Section("行为") {
-            Toggle("在滑条上滚动以调节音量", isOn: $prefs.scrollToAdjust)
+        Section {
+            Toggle("在控件上滚动以调节", isOn: $prefs.scrollToAdjust)
+            Toggle("反转滚动方向", isOn: $prefs.invertScroll)
+                .disabled(!prefs.scrollToAdjust)
+        } header: {
+            Text("行为")
+        } footer: {
+            Text("反转后，向上滚动为减小、向下滚动为增大。")
         }
     }
 

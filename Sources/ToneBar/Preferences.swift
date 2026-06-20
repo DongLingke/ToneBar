@@ -126,6 +126,57 @@ enum KnobStyle: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Control style (bar vs. rotary dial)
+
+enum DialStyle {
+    case realistic   // skeuomorphic 3D knob
+    case flat        // flat disc + arc
+    case pie         // pie-chart fill
+    case ring        // thin gauge ring
+}
+
+enum ControlStyle: String, CaseIterable, Identifiable {
+    case bar           // horizontal slider (uses sliderStyle + knobStyle)
+    case dialRealistic
+    case dialFlat
+    case dialPie
+    case dialRing
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .bar:           return "横向滑条"
+        case .dialRealistic: return "旋钮 · 仿真"
+        case .dialFlat:      return "旋钮 · 扁平"
+        case .dialPie:       return "旋钮 · 饼状"
+        case .dialRing:      return "旋钮 · 环形"
+        }
+    }
+
+    var isDial: Bool { self != .bar }
+
+    var dial: DialStyle? {
+        switch self {
+        case .bar:           return nil
+        case .dialRealistic: return .realistic
+        case .dialFlat:      return .flat
+        case .dialPie:       return .pie
+        case .dialRing:      return .ring
+        }
+    }
+}
+
+// MARK: - Layout of the two sliders
+
+enum SliderLayout: String, CaseIterable, Identifiable {
+    case horizontal   // side by side
+    case vertical     // stacked top/bottom
+
+    var id: String { rawValue }
+    var label: String { self == .horizontal ? "横向并排" : "上下并排" }
+}
+
 // MARK: - Preferences store
 
 /// Single source of truth shared by the AppKit status item and the SwiftUI
@@ -173,9 +224,23 @@ final class Preferences: ObservableObject {
         didSet { store.set(tint.rawValue, forKey: Keys.tint) }
     }
 
+    @Published var sliderLayout: SliderLayout {
+        didSet { store.set(sliderLayout.rawValue, forKey: Keys.sliderLayout) }
+    }
+    @Published var volumeControl: ControlStyle {
+        didSet { store.set(volumeControl.rawValue, forKey: Keys.volumeControl) }
+    }
+    /// Invert scroll direction (scroll up = decrease).
+    @Published var invertScroll: Bool {
+        didSet { store.set(invertScroll, forKey: Keys.invertScroll) }
+    }
+
     // Brightness slider (optional second slider) — independent styling.
     @Published var showBrightness: Bool {
         didSet { store.set(showBrightness, forKey: Keys.showBrightness) }
+    }
+    @Published var brightnessControl: ControlStyle {
+        didSet { store.set(brightnessControl.rawValue, forKey: Keys.brightnessControl) }
     }
     @Published var brightnessSliderStyle: SliderStyle {
         didSet { store.set(brightnessSliderStyle.rawValue, forKey: Keys.brightnessSliderStyle) }
@@ -211,7 +276,12 @@ final class Preferences: ObservableObject {
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
         tint = TintChoice(rawValue: store.string(forKey: Keys.tint) ?? "") ?? .system
 
+        sliderLayout = SliderLayout(rawValue: store.string(forKey: Keys.sliderLayout) ?? "") ?? .horizontal
+        volumeControl = ControlStyle(rawValue: store.string(forKey: Keys.volumeControl) ?? "") ?? .bar
+        invertScroll = store.object(forKey: Keys.invertScroll) as? Bool ?? false
+
         showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
+        brightnessControl = ControlStyle(rawValue: store.string(forKey: Keys.brightnessControl) ?? "") ?? .bar
         brightnessSliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.brightnessSliderStyle) ?? "") ?? .capsule
         brightnessKnobStyle = KnobStyle(rawValue: store.string(forKey: Keys.brightnessKnobStyle) ?? "") ?? .circle
         brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
@@ -242,7 +312,11 @@ final class Preferences: ObservableObject {
         static let scrollToAdjust = "scrollToAdjust"
         static let glassBackground = "glassBackground"
         static let tint = "tint"
+        static let sliderLayout = "sliderLayout"
+        static let volumeControl = "volumeControl"
+        static let invertScroll = "invertScroll"
         static let showBrightness = "showBrightness"
+        static let brightnessControl = "brightnessControl"
         static let brightnessSliderStyle = "brightnessSliderStyle"
         static let brightnessKnobStyle = "brightnessKnobStyle"
         static let brightnessTint = "brightnessTint"
