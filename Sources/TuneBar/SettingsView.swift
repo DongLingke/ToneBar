@@ -133,6 +133,8 @@ struct ChannelGrid: View {
     private var briOn: Bool { prefs.showBrightness }
     private var volBar: Bool { volOn && prefs.volumeControl == .bar }
     private var briBar: Bool { briOn && prefs.brightnessControl == .bar }
+    private var volDial: Bool { volOn && prefs.volumeControl == .dial }
+    private var briDial: Bool { briOn && prefs.brightnessControl == .dial }
     private var volKnobRow: Bool { volBar && prefs.sliderStyle != .system }
     private var briKnobRow: Bool { briBar && prefs.brightnessSliderStyle != .system }
 
@@ -166,6 +168,14 @@ struct ChannelGrid: View {
                 rowLabel("强调色")
                 cell(volOn) { tintPicker($prefs.tint) }
                 cell(briOn) { tintPicker($prefs.brightnessTint) }
+            }
+
+            if volDial || briDial {
+                GridRow {
+                    rowLabel("旋钮设计")
+                    cell(volDial) { dialStylePicker($prefs.volumeDialStyle) }
+                    cell(briDial) { dialStylePicker($prefs.brightnessDialStyle) }
+                }
             }
 
             if volBar || briBar {
@@ -240,6 +250,10 @@ struct ChannelGrid: View {
 
     private func controlPicker(_ sel: Binding<ControlStyle>) -> some View {
         Picker("", selection: sel) { ForEach(ControlStyle.allCases) { Text($0.label).tag($0) } }
+            .labelsHidden().pickerStyle(.segmented).fixedSize()
+    }
+    private func dialStylePicker(_ sel: Binding<DialStyle>) -> some View {
+        Picker("", selection: sel) { ForEach(DialStyle.allCases) { Text($0.label).tag($0) } }
             .labelsHidden().pickerStyle(.menu).fixedSize()
     }
     private func sliderStylePicker(_ sel: Binding<SliderStyle>) -> some View {

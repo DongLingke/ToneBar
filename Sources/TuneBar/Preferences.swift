@@ -126,43 +126,37 @@ enum KnobStyle: String, CaseIterable, Identifiable {
     }
 }
 
-// MARK: - Control style (bar vs. rotary dial)
+// MARK: - Control type (bar vs. rotary dial)
 
-enum DialStyle {
+enum ControlStyle: String, CaseIterable, Identifiable {
+    case bar    // horizontal slider (uses sliderStyle + knobStyle)
+    case dial   // rotary dial (uses dialStyle)
+
+    var id: String { rawValue }
+    var label: String { self == .bar ? "滚动条" : "旋钮" }
+    var isDial: Bool { self == .dial }
+}
+
+// MARK: - Dial design (when the control is a rotary dial)
+
+enum DialStyle: String, CaseIterable, Identifiable {
     case realistic   // skeuomorphic 3D knob
     case flat        // flat disc + arc
     case pie         // pie-chart fill
     case ring        // thin gauge ring
-}
-
-enum ControlStyle: String, CaseIterable, Identifiable {
-    case bar           // horizontal slider (uses sliderStyle + knobStyle)
-    case dialRealistic
-    case dialFlat
-    case dialPie
-    case dialRing
+    case minimal     // bare value arc, no body
+    case tickDial    // flat knob ringed with tick marks
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .bar:           return "横向滑条"
-        case .dialRealistic: return "旋钮 · 仿真"
-        case .dialFlat:      return "旋钮 · 扁平"
-        case .dialPie:       return "旋钮 · 饼状"
-        case .dialRing:      return "旋钮 · 环形"
-        }
-    }
-
-    var isDial: Bool { self != .bar }
-
-    var dial: DialStyle? {
-        switch self {
-        case .bar:           return nil
-        case .dialRealistic: return .realistic
-        case .dialFlat:      return .flat
-        case .dialPie:       return .pie
-        case .dialRing:      return .ring
+        case .realistic: return "仿真"
+        case .flat:      return "扁平"
+        case .pie:       return "饼状"
+        case .ring:      return "环形"
+        case .minimal:   return "极简弧"
+        case .tickDial:  return "刻度盘"
         }
     }
 }
@@ -231,6 +225,9 @@ final class Preferences: ObservableObject {
     @Published var volumeControl: ControlStyle {
         didSet { store.set(volumeControl.rawValue, forKey: Keys.volumeControl) }
     }
+    @Published var volumeDialStyle: DialStyle {
+        didSet { store.set(volumeDialStyle.rawValue, forKey: Keys.volumeDialStyle) }
+    }
     @Published var volumeScroll: Bool {
         didSet { store.set(volumeScroll, forKey: Keys.volumeScroll) }
     }
@@ -244,6 +241,9 @@ final class Preferences: ObservableObject {
     }
     @Published var brightnessControl: ControlStyle {
         didSet { store.set(brightnessControl.rawValue, forKey: Keys.brightnessControl) }
+    }
+    @Published var brightnessDialStyle: DialStyle {
+        didSet { store.set(brightnessDialStyle.rawValue, forKey: Keys.brightnessDialStyle) }
     }
     @Published var brightnessSliderStyle: SliderStyle {
         didSet { store.set(brightnessSliderStyle.rawValue, forKey: Keys.brightnessSliderStyle) }
@@ -299,13 +299,20 @@ final class Preferences: ObservableObject {
         let legacyScroll = store.object(forKey: "scrollToAdjust") as? Bool
         let legacyInvert = store.object(forKey: "invertScroll") as? Bool
 
+        // The control type + dial design used to be one combined value
+        // (e.g. "dialFlat"); split them, preserving any prior dial choice.
+        let (volCtl, volDialMig) = Self.splitControl(store.string(forKey: Keys.volumeControl))
+        let (briCtl, briDialMig) = Self.splitControl(store.string(forKey: Keys.brightnessControl))
+
         showVolume = store.object(forKey: Keys.showVolume) as? Bool ?? true
-        volumeControl = ControlStyle(rawValue: store.string(forKey: Keys.volumeControl) ?? "") ?? .bar
+        volumeControl = volCtl
+        volumeDialStyle = DialStyle(rawValue: store.string(forKey: Keys.volumeDialStyle) ?? "") ?? volDialMig ?? .flat
         volumeScroll = store.object(forKey: Keys.volumeScroll) as? Bool ?? legacyScroll ?? true
         invertVolumeScroll = store.object(forKey: Keys.invertVolumeScroll) as? Bool ?? legacyInvert ?? false
 
         showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
-        brightnessControl = ControlStyle(rawValue: store.string(forKey: Keys.brightnessControl) ?? "") ?? .bar
+        brightnessControl = briCtl
+        brightnessDialStyle = DialStyle(rawValue: store.string(forKey: Keys.brightnessDialStyle) ?? "") ?? briDialMig ?? .flat
         brightnessSliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.brightnessSliderStyle) ?? "") ?? .capsule
         brightnessKnobStyle = KnobStyle(rawValue: store.string(forKey: Keys.brightnessKnobStyle) ?? "") ?? .circle
         brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
@@ -341,6 +348,19 @@ final class Preferences: ObservableObject {
         (showVolume && volumeScroll) || (showBrightness && brightnessScroll)
     }
 
+    /// Split a legacy combined control value (e.g. "dialFlat") into the new
+    /// control type + dial design pair.
+    private static func splitControl(_ raw: String?) -> (ControlStyle, DialStyle?) {
+        switch raw {
+        case "dial":          return (.dial, nil)
+        case "dialRealistic": return (.dial, .realistic)
+        case "dialFlat":      return (.dial, .flat)
+        case "dialPie":       return (.dial, .pie)
+        case "dialRing":      return (.dial, .ring)
+        default:              return (.bar, nil)
+        }
+    }
+
     private enum Keys {
         static let iconStyle = "iconStyle"
         static let sliderStyle = "sliderStyle"
@@ -354,10 +374,12 @@ final class Preferences: ObservableObject {
         static let sliderLayout = "sliderLayout"
         static let showVolume = "showVolume"
         static let volumeControl = "volumeControl"
+        static let volumeDialStyle = "volumeDialStyle"
         static let volumeScroll = "volumeScroll"
         static let invertVolumeScroll = "invertVolumeScroll"
         static let showBrightness = "showBrightness"
         static let brightnessControl = "brightnessControl"
+        static let brightnessDialStyle = "brightnessDialStyle"
         static let brightnessSliderStyle = "brightnessSliderStyle"
         static let brightnessKnobStyle = "brightnessKnobStyle"
         static let brightnessTint = "brightnessTint"

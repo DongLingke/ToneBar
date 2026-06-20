@@ -13,7 +13,8 @@ enum PreviewRenderer {
         // dial column drops its slider-only rows.
         let p = Preferences.shared
         p.showBrightness = true
-        p.volumeControl = .dialRealistic
+        p.volumeControl = .dial
+        p.volumeDialStyle = .realistic
         p.brightnessControl = .bar
         let view = ChannelGrid()
             .padding(20)
@@ -50,20 +51,16 @@ private struct PreviewSheet: View {
     /// The four rotary-dial designs, plus a value comparison.
     private var dialRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("旋钮设计（仿真 / 扁平 / 饼状 / 环形）")
+            Text("旋钮设计（仿真 / 扁平 / 饼状 / 环形 / 极简弧 / 刻度盘）")
                 .font(.system(size: 12, weight: .bold)).foregroundStyle(.white.opacity(0.6))
-            HStack(spacing: 26) {
-                ForEach(Array([("仿真", DialStyle.realistic), ("扁平", .flat),
-                               ("饼状", .pie), ("环形", .ring)].enumerated()), id: \.offset) { _, item in
+            HStack(spacing: 22) {
+                ForEach(DialStyle.allCases) { style in
                     VStack(spacing: 6) {
-                        DialControl(value: .constant(0.68), diameter: 40, tint: .blue,
-                                    style: item.1, muted: false)
-                        Text(item.0).font(.system(size: 11)).foregroundStyle(.white.opacity(0.8))
+                        DialControl(value: .constant(0.68), diameter: 44, tint: .blue,
+                                    style: style, muted: false)
+                        Text(style.label).font(.system(size: 11)).foregroundStyle(.white.opacity(0.8))
                     }
                 }
-                // bigger sample to show detail
-                DialControl(value: .constant(0.35), diameter: 64, tint: .orange, style: .realistic, muted: false)
-                DialControl(value: .constant(0.5), diameter: 64, tint: .green, style: .pie, muted: false)
             }
         }
     }

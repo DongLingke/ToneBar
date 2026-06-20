@@ -66,6 +66,7 @@ struct MenuSliderView: View {
             control(
                 value: Binding(get: { audio.volume }, set: { audio.setVolume($0) }),
                 style: prefs.volumeControl,
+                dialStyle: prefs.volumeDialStyle,
                 tint: prefs.tint.resolved,
                 sliderStyle: prefs.sliderStyle,
                 knobStyle: prefs.knobStyle,
@@ -92,6 +93,7 @@ struct MenuSliderView: View {
             control(
                 value: Binding(get: { brightness.brightness }, set: { brightness.setBrightness($0) }),
                 style: prefs.brightnessControl,
+                dialStyle: prefs.brightnessDialStyle,
                 tint: prefs.brightnessTint.resolved,
                 sliderStyle: prefs.brightnessSliderStyle,
                 knobStyle: prefs.brightnessKnobStyle,
@@ -109,17 +111,17 @@ struct MenuSliderView: View {
     // MARK: - Control (bar or dial)
 
     @ViewBuilder
-    private func control(value: Binding<Double>, style: ControlStyle, tint: Color,
-                         sliderStyle: SliderStyle, knobStyle: KnobStyle,
+    private func control(value: Binding<Double>, style: ControlStyle, dialStyle: DialStyle,
+                         tint: Color, sliderStyle: SliderStyle, knobStyle: KnobStyle,
                          width: CGFloat, hideKnob: Bool, steps: Int,
                          muted: Bool, snap: @escaping (Double) -> Double,
                          target: ScrollTarget) -> some View {
-        if let dial = style.dial {
+        if style.isDial {
             DialControl(
                 value: value,
                 diameter: rowHeight + (compact ? 0 : 2),
                 tint: tint,
-                style: dial,
+                style: dialStyle,
                 muted: muted,
                 snap: snap,
                 onHover: { if $0 { setScrollTarget(target) } }

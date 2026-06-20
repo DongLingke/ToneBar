@@ -42,6 +42,8 @@ struct DialControl: View {
         case .flat:      flat
         case .pie:       pie
         case .ring:      ring
+        case .minimal:   minimal
+        case .tickDial:  tickDial
         }
     }
 
@@ -122,6 +124,38 @@ struct DialControl: View {
                 .rotationEffect(pointerAngle - .degrees(270))
         }
         .padding(diameter * 0.08)
+    }
+
+    // MARK: - Minimal (bare value arc)
+
+    private var minimal: some View {
+        gauge(value)
+            .stroke(tint, style: .init(lineWidth: max(2, diameter * 0.16), lineCap: .round))
+            .background(
+                gauge(1).stroke(.primary.opacity(0.12), style: .init(lineWidth: max(2, diameter * 0.16), lineCap: .round))
+            )
+            .padding(max(1.5, diameter * 0.1))
+    }
+
+    // MARK: - Tick dial (knob ringed with ticks)
+
+    private var tickDial: some View {
+        ZStack {
+            ForEach(0..<11, id: \.self) { i in
+                let f = Double(i) / 10.0
+                Capsule()
+                    .fill(f <= value ? AnyShapeStyle(tint) : AnyShapeStyle(.primary.opacity(0.25)))
+                    .frame(width: max(1, diameter * 0.05), height: diameter * 0.13)
+                    .offset(y: -diameter * 0.43)
+                    .rotationEffect(.degrees(gaugeStart + gaugeSweep * f - 270))
+            }
+            Circle()
+                .fill(.primary.opacity(0.10))
+                .overlay(Circle().strokeBorder(.primary.opacity(0.2), lineWidth: 0.5))
+                .padding(diameter * 0.26)
+            pointer(length: diameter * 0.16, width: max(1.5, diameter * 0.08), color: tint)
+                .padding(diameter * 0.26)
+        }
     }
 
     // MARK: - Pointer helper
