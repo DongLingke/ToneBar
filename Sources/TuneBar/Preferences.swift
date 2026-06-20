@@ -228,8 +228,9 @@ final class Preferences: ObservableObject {
     @Published var volumeDialStyle: DialStyle {
         didSet { store.set(volumeDialStyle.rawValue, forKey: Keys.volumeDialStyle) }
     }
-    @Published var volumeScroll: Bool {
-        didSet { store.set(volumeScroll, forKey: Keys.volumeScroll) }
+    /// Scroll speed multiplier (0 == scrolling disabled).
+    @Published var volumeScrollSpeed: Double {
+        didSet { store.set(volumeScrollSpeed, forKey: Keys.volumeScrollSpeed) }
     }
     @Published var invertVolumeScroll: Bool {
         didSet { store.set(invertVolumeScroll, forKey: Keys.invertVolumeScroll) }
@@ -263,8 +264,8 @@ final class Preferences: ObservableObject {
     @Published var brightnessSteps: Int {
         didSet { store.set(brightnessSteps, forKey: Keys.brightnessSteps) }
     }
-    @Published var brightnessScroll: Bool {
-        didSet { store.set(brightnessScroll, forKey: Keys.brightnessScroll) }
+    @Published var brightnessScrollSpeed: Double {
+        didSet { store.set(brightnessScrollSpeed, forKey: Keys.brightnessScrollSpeed) }
     }
     @Published var invertBrightnessScroll: Bool {
         didSet { store.set(invertBrightnessScroll, forKey: Keys.invertBrightnessScroll) }
@@ -307,7 +308,7 @@ final class Preferences: ObservableObject {
         showVolume = store.object(forKey: Keys.showVolume) as? Bool ?? true
         volumeControl = volCtl
         volumeDialStyle = DialStyle(rawValue: store.string(forKey: Keys.volumeDialStyle) ?? "") ?? volDialMig ?? .flat
-        volumeScroll = store.object(forKey: Keys.volumeScroll) as? Bool ?? legacyScroll ?? true
+        volumeScrollSpeed = Self.migratedSpeed(store, Keys.volumeScrollSpeed, "volumeScroll", legacyScroll)
         invertVolumeScroll = store.object(forKey: Keys.invertVolumeScroll) as? Bool ?? legacyInvert ?? false
 
         showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
@@ -321,7 +322,7 @@ final class Preferences: ObservableObject {
         let rawBriSteps = store.object(forKey: Keys.brightnessSteps) as? Int ?? 0
         brightnessSteps = rawBriSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
                                                      max(Preferences.stepRange.lowerBound, rawBriSteps))
-        brightnessScroll = store.object(forKey: Keys.brightnessScroll) as? Bool ?? legacyScroll ?? true
+        brightnessScrollSpeed = Self.migratedSpeed(store, Keys.brightnessScrollSpeed, "brightnessScroll", legacyScroll)
         invertBrightnessScroll = store.object(forKey: Keys.invertBrightnessScroll) as? Bool ?? legacyInvert ?? false
 
         launchAtLogin = LaunchAtLogin.isEnabled
@@ -345,11 +346,19 @@ final class Preferences: ObservableObject {
 
     /// Whether scrolling adjusts anything (used to decide event interception).
     var anyScrollEnabled: Bool {
-        (showVolume && volumeScroll) || (showBrightness && brightnessScroll)
+        (showVolume && volumeScrollSpeed > 0) || (showBrightness && brightnessScrollSpeed > 0)
     }
 
     /// Split a legacy combined control value (e.g. "dialFlat") into the new
     /// control type + dial design pair.
+    /// Migrate an old on/off scroll boolean into a 0...4 speed (1 == on).
+    private static func migratedSpeed(_ store: UserDefaults, _ key: String,
+                                      _ legacyKey: String, _ legacyScroll: Bool?) -> Double {
+        if let v = store.object(forKey: key) as? Double { return v }
+        let on = (store.object(forKey: legacyKey) as? Bool) ?? legacyScroll ?? true
+        return on ? 1.0 : 0.0
+    }
+
     private static func splitControl(_ raw: String?) -> (ControlStyle, DialStyle?) {
         switch raw {
         case "dial":          return (.dial, nil)
@@ -375,7 +384,7 @@ final class Preferences: ObservableObject {
         static let showVolume = "showVolume"
         static let volumeControl = "volumeControl"
         static let volumeDialStyle = "volumeDialStyle"
-        static let volumeScroll = "volumeScroll"
+        static let volumeScrollSpeed = "volumeScrollSpeed"
         static let invertVolumeScroll = "invertVolumeScroll"
         static let showBrightness = "showBrightness"
         static let brightnessControl = "brightnessControl"
@@ -386,7 +395,7 @@ final class Preferences: ObservableObject {
         static let brightnessSliderWidth = "brightnessSliderWidth"
         static let brightnessHideKnobWhenIdle = "brightnessHideKnobWhenIdle"
         static let brightnessSteps = "brightnessSteps"
-        static let brightnessScroll = "brightnessScroll"
+        static let brightnessScrollSpeed = "brightnessScrollSpeed"
         static let invertBrightnessScroll = "invertBrightnessScroll"
     }
 }

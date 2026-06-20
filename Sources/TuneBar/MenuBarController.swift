@@ -92,32 +92,35 @@ final class MenuBarController: NSObject {
         let toBrightness = prefs.showBrightness && scrollTarget == .brightness
 
         if toBrightness {
-            guard prefs.brightnessScroll else { return }
+            let speed = prefs.brightnessScrollSpeed
+            guard speed > 0 else { return }
             let d = Double(delta) * (prefs.invertBrightnessScroll ? -1.0 : 1.0)
-            adjust(steps: prefs.brightnessSteps, delta: d,
+            adjust(steps: prefs.brightnessSteps, delta: d, speed: speed,
                    current: brightness.brightness,
                    apply: { brightness.setBrightness($0) })
         } else {
-            guard prefs.showVolume, prefs.volumeScroll else { return }
+            guard prefs.showVolume else { return }
+            let speed = prefs.volumeScrollSpeed
+            guard speed > 0 else { return }
             let d = Double(delta) * (prefs.invertVolumeScroll ? -1.0 : 1.0)
-            adjust(steps: prefs.steps, delta: d,
+            adjust(steps: prefs.steps, delta: d, speed: speed,
                    current: audio.volume,
                    apply: { audio.setVolume($0) })
         }
     }
 
-    /// Shared scroll handling: stepped channels move one notch per gesture tick,
-    /// continuous ones move proportionally.
-    private func adjust(steps: Int, delta: Double, current: Double, apply: (Double) -> Void) {
+    /// Shared scroll handling: stepped channels move one notch per gesture tick
+    /// (faster speed lowers the threshold), continuous ones move proportionally.
+    private func adjust(steps: Int, delta: Double, speed: Double, current: Double, apply: (Double) -> Void) {
         if steps > 1 {
             scrollAccumulator += delta
-            let threshold = 4.0
+            let threshold = 4.0 / max(0.25, speed)
             guard abs(scrollAccumulator) >= threshold else { return }
             let direction = scrollAccumulator > 0 ? 1.0 : -1.0
             apply(prefs.snap(current + direction * prefs.nudgeAmount(steps: steps), steps: steps))
             scrollAccumulator = 0
         } else {
-            apply(current + delta * 0.005)
+            apply(current + delta * 0.005 * speed)
             scrollAccumulator = 0
         }
     }

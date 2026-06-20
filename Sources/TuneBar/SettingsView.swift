@@ -221,16 +221,16 @@ struct ChannelGrid: View {
                     cell(briOn) { stepsPicker($prefs.brightnessSteps) }
                 }
                 GridRow {
-                    rowLabel("滚动调节")
-                    cell(volOn) { Toggle("", isOn: $prefs.volumeScroll).labelsHidden() }
-                    cell(briOn) { Toggle("", isOn: $prefs.brightnessScroll).labelsHidden() }
+                    rowLabel("滚动速度")
+                    cell(volOn) { speedSlider($prefs.volumeScrollSpeed) }
+                    cell(briOn) { speedSlider($prefs.brightnessScrollSpeed) }
                 }
                 GridRow {
                     rowLabel("反转滚动")
-                    cell(volOn && prefs.volumeScroll) {
+                    cell(volOn && prefs.volumeScrollSpeed > 0) {
                         Toggle("", isOn: $prefs.invertVolumeScroll).labelsHidden()
                     }
-                    cell(briOn && prefs.brightnessScroll) {
+                    cell(briOn && prefs.brightnessScrollSpeed > 0) {
                         Toggle("", isOn: $prefs.invertBrightnessScroll).labelsHidden()
                     }
                 }
@@ -282,6 +282,14 @@ struct ChannelGrid: View {
         }
         .labelsHidden().pickerStyle(.menu).fixedSize()
     }
+    private func speedSlider(_ value: Binding<Double>) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Slider(value: value, in: 0...4, step: 0.25).frame(width: 150)
+            Text(value.wrappedValue == 0 ? "关闭" : String(format: "%.2g×", value.wrappedValue))
+                .font(.caption).foregroundStyle(.secondary).monospacedDigit()
+        }
+    }
+
     private func widthSlider(_ value: Binding<Double>) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Slider(value: value, in: 60...240, step: 5).frame(width: 150)
