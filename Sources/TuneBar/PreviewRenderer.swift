@@ -15,7 +15,7 @@ enum PreviewRenderer {
         p.showVolume = true
         p.showBrightness = true
         p.volumeControl = .dial
-        p.volumeDialStyle = .realistic
+        p.volumeDialStyle = .semiGauge
         p.brightnessControl = .bar
         let view = HStack(alignment: .top, spacing: 14) {
             ChannelCard(title: "音量", systemImage: "speaker.wave.2.fill", isVolume: true)
@@ -110,7 +110,7 @@ private struct PreviewSheet: View {
                 HStack(spacing: 8) {
                     Image(systemName: "speaker.wave.2.fill")
                         .font(.system(size: 12, weight: .semibold)).foregroundStyle(.white)
-                    DialControl(value: .constant(0.6), diameter: 18, tint: .blue, style: .semiTicks, muted: false)
+                    DialControl(value: .constant(0.6), diameter: 18, tint: .blue, style: .semiGauge, muted: false)
                     DialControl(value: .constant(0.7), diameter: 18, tint: .orange, style: .semiNeedle, muted: false)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 3)

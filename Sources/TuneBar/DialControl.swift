@@ -38,14 +38,11 @@ struct DialControl: View {
 
     @ViewBuilder private var content: some View {
         switch style {
-        case .realistic:  realistic
         case .flat:       flat
         case .pie:        pie
-        case .ring:       ring
         case .minimal:    minimal
         case .tickDial:   tickDial
-        case .semiTicks:  semicircle(fillArc: false, ticks: 13, needle: false)
-        case .semiGauge:  semicircle(fillArc: true, ticks: 7, needle: false)
+        case .semiGauge:  semicircle(fillArc: true, ticks: 0, needle: false)
         case .semiNeedle: semicircle(fillArc: false, ticks: 13, needle: true)
         }
     }
@@ -74,36 +71,6 @@ struct DialControl: View {
         .padding(lineW / 2)
     }
 
-    // MARK: - Realistic (skeuomorphic)
-
-    private var realistic: some View {
-        ZStack {
-            // outer value gauge
-            gauge(1).stroke(.primary.opacity(0.18), style: .init(lineWidth: max(1.5, diameter * 0.08), lineCap: .round))
-            gauge(value).stroke(tint, style: .init(lineWidth: max(1.5, diameter * 0.08), lineCap: .round))
-                .padding(diameter * 0.005)
-
-            // brushed-metal knob body
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color(white: 0.42), Color(white: 0.20), Color(white: 0.10)],
-                        center: .init(x: 0.35, y: 0.30), startRadius: 0, endRadius: diameter * 0.55)
-                )
-                .overlay(
-                    Circle().fill(
-                        LinearGradient(colors: [.white.opacity(0.35), .clear, .black.opacity(0.35)],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing))
-                )
-                .overlay(Circle().strokeBorder(.black.opacity(0.55), lineWidth: max(0.5, diameter * 0.02)))
-                .padding(diameter * 0.18)
-
-            // indicator notch
-            pointer(length: diameter * 0.20, width: max(1.5, diameter * 0.07), color: .white)
-                .padding(diameter * 0.18)
-        }
-    }
-
     // MARK: - Pie (pie-chart fill)
 
     private var pie: some View {
@@ -112,21 +79,6 @@ struct DialControl: View {
             Circle().strokeBorder(.primary.opacity(0.2), lineWidth: 1)
             PieShape(fraction: value).fill(tint)
         }
-    }
-
-    // MARK: - Ring (thin gauge)
-
-    private var ring: some View {
-        ZStack {
-            gauge(1).stroke(.primary.opacity(0.16), style: .init(lineWidth: max(1.5, diameter * 0.09), lineCap: .round))
-            gauge(value).stroke(tint, style: .init(lineWidth: max(1.5, diameter * 0.09), lineCap: .round))
-            // dot at the current position
-            Circle().fill(tint)
-                .frame(width: diameter * 0.16, height: diameter * 0.16)
-                .offset(y: -diameter * 0.40)
-                .rotationEffect(pointerAngle - .degrees(270))
-        }
-        .padding(diameter * 0.08)
     }
 
     // MARK: - Minimal (bare value arc)

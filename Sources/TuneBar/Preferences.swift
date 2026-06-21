@@ -140,13 +140,10 @@ enum ControlStyle: String, CaseIterable, Identifiable {
 // MARK: - Dial design (when the control is a rotary dial)
 
 enum DialStyle: String, CaseIterable, Identifiable {
-    case realistic   // skeuomorphic 3D knob
     case flat        // flat disc + arc
     case pie         // pie-chart fill
-    case ring        // thin gauge ring
     case minimal     // bare value arc, no body
     case tickDial    // flat knob ringed with tick marks
-    case semiTicks   // wide 180° gauge with lit tick marks
     case semiGauge   // wide 180° gauge with a filled value arc
     case semiNeedle  // wide 180° speedometer with ticks + needle
 
@@ -154,13 +151,10 @@ enum DialStyle: String, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .realistic:  return "仿真"
         case .flat:       return "扁平"
         case .pie:        return "饼状"
-        case .ring:       return "环形"
         case .minimal:    return "极简弧"
         case .tickDial:   return "刻度盘"
-        case .semiTicks:  return "半圆 · 刻度"
         case .semiGauge:  return "半圆 · 弧"
         case .semiNeedle: return "半圆 · 指针"
         }
@@ -168,7 +162,7 @@ enum DialStyle: String, CaseIterable, Identifiable {
 
     /// Half-circle gauges render wider than tall.
     var isSemicircle: Bool {
-        self == .semiTicks || self == .semiGauge || self == .semiNeedle
+        self == .semiGauge || self == .semiNeedle
     }
 }
 
@@ -410,10 +404,10 @@ final class Preferences: ObservableObject {
     private static func splitControl(_ raw: String?) -> (ControlStyle, DialStyle?) {
         switch raw {
         case "dial":          return (.dial, nil)
-        case "dialRealistic": return (.dial, .realistic)
+        case "dialRealistic": return (.dial, .flat)
         case "dialFlat":      return (.dial, .flat)
         case "dialPie":       return (.dial, .pie)
-        case "dialRing":      return (.dial, .ring)
+        case "dialRing":      return (.dial, .flat)
         default:              return (.bar, nil)
         }
     }
