@@ -20,9 +20,9 @@ struct DialControl: View {
 
     var body: some View {
         content
-            .frame(width: diameter, height: diameter)
+            .frame(width: style.isSemicircle ? diameter * 2 : diameter, height: diameter)
             .opacity(muted ? 0.5 : 1)
-            .contentShape(Circle())
+            .contentShape(Rectangle())
             .onHover { onHover($0) }
             .gesture(
                 DragGesture(minimumDistance: 0)
@@ -38,12 +38,15 @@ struct DialControl: View {
 
     @ViewBuilder private var content: some View {
         switch style {
-        case .realistic: realistic
-        case .flat:      flat
-        case .pie:       pie
-        case .ring:      ring
-        case .minimal:   minimal
-        case .tickDial:  tickDial
+        case .realistic:  realistic
+        case .flat:       flat
+        case .pie:        pie
+        case .ring:       ring
+        case .minimal:    minimal
+        case .tickDial:   tickDial
+        case .semiTicks:  semicircle(fillArc: false, ticks: 13, needle: false)
+        case .semiGauge:  semicircle(fillArc: true, ticks: 7, needle: false)
+        case .semiNeedle: semicircle(fillArc: false, ticks: 13, needle: true)
         }
     }
 
@@ -173,6 +176,68 @@ struct DialControl: View {
                 .padding(diameter * 0.30)
             Circle().fill(tint)
                 .frame(width: diameter * 0.07, height: diameter * 0.07)
+        }
+    }
+
+    // MARK: - Semicircle gauges (wide 180° dials)
+
+    private func semicircle(fillArc: Bool, ticks: Int, needle: Bool) -> some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let cx = w / 2
+            let cy = h * 0.97
+            let r = min(w / 2, h * 0.97) * 0.98
+            let arcW = max(2.5, h * 0.18)
+
+            ZStack {
+                semiArc(cx, cy, r, 1).stroke(.primary.opacity(0.15),
+                              style: .init(lineWidth: fillArc ? arcW : max(1.5, h * 0.05), lineCap: .round))
+                if fillArc {
+                    semiArc(cx, cy, r, value).stroke(tint, style: .init(lineWidth: arcW, lineCap: .round))
+                }
+
+                if ticks > 1 {
+                    let active = Int((value * Double(ticks - 1)).rounded())
+                    ForEach(0..<ticks, id: \.self) { i in
+                        let f = Double(i) / Double(ticks - 1)
+                        let deg = 180 + 180 * f
+                        let on = i <= active
+                        let len = h * (on ? 0.28 : 0.20)
+                        let rad = deg * .pi / 180
+                        Capsule()
+                            .fill(on ? AnyShapeStyle(tint) : AnyShapeStyle(.primary.opacity(0.28)))
+                            .frame(width: max(1.3, h * 0.06), height: len)
+                            .shadow(color: on ? tint.opacity(0.6) : .clear, radius: h * 0.02)
+                            .position(x: cx + CGFloat(cos(rad)) * (r - len * 0.45),
+                                      y: cy + CGFloat(sin(rad)) * (r - len * 0.45))
+                            .rotationEffect(.degrees(deg - 90), anchor: .center)
+                    }
+                }
+
+                if needle {
+                    let rad = (180 + 180 * value) * .pi / 180
+                    Path { p in
+                        p.move(to: CGPoint(x: cx, y: cy))
+                        p.addLine(to: CGPoint(x: cx + CGFloat(cos(rad)) * r * 0.8,
+                                              y: cy + CGFloat(sin(rad)) * r * 0.8))
+                    }
+                    .stroke(tint, style: .init(lineWidth: max(1.5, h * 0.08), lineCap: .round))
+                    Circle().fill(tint)
+                        .frame(width: h * 0.18, height: h * 0.18)
+                        .position(x: cx, y: cy)
+                }
+            }
+        }
+        .padding(.horizontal, diameter * 0.05)
+    }
+
+    private func semiArc(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat, _ frac: Double) -> Path {
+        Path { p in
+            p.addArc(center: CGPoint(x: cx, y: cy), radius: r,
+                     startAngle: .degrees(180),
+                     endAngle: .degrees(180 + 180 * max(0, min(1, frac))),
+                     clockwise: false)
         }
     }
 

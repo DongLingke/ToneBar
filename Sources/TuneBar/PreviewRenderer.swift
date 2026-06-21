@@ -34,7 +34,7 @@ enum PreviewRenderer {
 
     @MainActor
     static func render(to path: String) {
-        let view = PreviewSheet().frame(width: 720).padding(16).background(Color(white: 0.12))
+        let view = PreviewSheet().frame(width: 900).padding(16).background(Color(white: 0.12))
         let renderer = ImageRenderer(content: view)
         renderer.scale = 3
         guard let cg = renderer.cgImage else { return }
@@ -55,14 +55,14 @@ private struct PreviewSheet: View {
     /// The four rotary-dial designs, plus a value comparison.
     private var dialRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("旋钮设计（仿真 / 扁平 / 饼状 / 环形 / 极简弧 / 刻度盘）")
+            Text("旋钮设计")
                 .font(.system(size: 12, weight: .bold)).foregroundStyle(.white.opacity(0.6))
-            HStack(spacing: 22) {
+            HStack(alignment: .bottom, spacing: 16) {
                 ForEach(DialStyle.allCases) { style in
                     VStack(spacing: 6) {
-                        DialControl(value: .constant(0.62), diameter: 72, tint: .blue,
+                        DialControl(value: .constant(0.62), diameter: 50, tint: .blue,
                                     style: style, muted: false)
-                        Text(style.label).font(.system(size: 12)).foregroundStyle(.white.opacity(0.8))
+                        Text(style.label).font(.system(size: 11)).foregroundStyle(.white.opacity(0.8))
                     }
                 }
             }
