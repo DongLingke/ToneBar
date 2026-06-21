@@ -60,9 +60,9 @@ private struct PreviewSheet: View {
             HStack(spacing: 22) {
                 ForEach(DialStyle.allCases) { style in
                     VStack(spacing: 6) {
-                        DialControl(value: .constant(0.68), diameter: 44, tint: .blue,
+                        DialControl(value: .constant(0.62), diameter: 72, tint: .blue,
                                     style: style, muted: false)
-                        Text(style.label).font(.system(size: 11)).foregroundStyle(.white.opacity(0.8))
+                        Text(style.label).font(.system(size: 12)).foregroundStyle(.white.opacity(0.8))
                     }
                 }
             }

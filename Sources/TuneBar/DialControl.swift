@@ -137,24 +137,42 @@ struct DialControl: View {
             .padding(max(1.5, diameter * 0.1))
     }
 
-    // MARK: - Tick dial (knob ringed with ticks)
+    // MARK: - Tick dial (instrument-style knob ringed with ticks)
 
     private var tickDial: some View {
-        ZStack {
-            ForEach(0..<11, id: \.self) { i in
-                let f = Double(i) / 10.0
+        let count = 13
+        let activeUpTo = Int((value * Double(count - 1)).rounded())
+        return ZStack {
+            ForEach(0..<count, id: \.self) { i in
+                let f = Double(i) / Double(count - 1)
+                let on = i <= activeUpTo
                 Capsule()
-                    .fill(f <= value ? AnyShapeStyle(tint) : AnyShapeStyle(.primary.opacity(0.25)))
-                    .frame(width: max(1, diameter * 0.05), height: diameter * 0.13)
-                    .offset(y: -diameter * 0.43)
+                    .fill(on ? AnyShapeStyle(tint) : AnyShapeStyle(.primary.opacity(0.22)))
+                    .frame(width: max(1.2, diameter * 0.05),
+                           height: diameter * (on ? 0.17 : 0.12))
+                    .shadow(color: on ? tint.opacity(0.6) : .clear, radius: diameter * 0.015)
+                    .offset(y: -diameter * 0.40)
                     .rotationEffect(.degrees(gaugeStart + gaugeSweep * f - 270))
             }
+
+            // raised center cap
             Circle()
-                .fill(.primary.opacity(0.10))
-                .overlay(Circle().strokeBorder(.primary.opacity(0.2), lineWidth: 0.5))
-                .padding(diameter * 0.26)
-            pointer(length: diameter * 0.16, width: max(1.5, diameter * 0.08), color: tint)
-                .padding(diameter * 0.26)
+                .fill(
+                    RadialGradient(
+                        colors: [Color(white: 0.34), Color(white: 0.15)],
+                        center: .init(x: 0.35, y: 0.30),
+                        startRadius: 0, endRadius: diameter * 0.32)
+                )
+                .overlay(Circle().strokeBorder(.white.opacity(0.14), lineWidth: 0.5))
+                .overlay(Circle().strokeBorder(.black.opacity(0.4), lineWidth: 0.5).blur(radius: 0.5))
+                .padding(diameter * 0.30)
+                .shadow(color: .black.opacity(0.35), radius: diameter * 0.02, y: diameter * 0.01)
+
+            // pointer + hub dot
+            pointer(length: diameter * 0.17, width: max(1.5, diameter * 0.07), color: .white)
+                .padding(diameter * 0.30)
+            Circle().fill(tint)
+                .frame(width: diameter * 0.07, height: diameter * 0.07)
         }
     }
 
