@@ -168,12 +168,12 @@ struct MenuSliderView: View {
 
     @ViewBuilder
     private func percentage(_ value: Double) -> some View {
-        if prefs.showPercentage && !compact {
-            Text("\(Int((value * 100).rounded()))")
+        if !compact, let text = prefs.percentStyle.text(value) {
+            Text(text)
                 .font(.system(size: 11, weight: .medium))
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
-                .frame(width: 26, alignment: .trailing)
+                .frame(width: prefs.percentStyle.width, alignment: .trailing)
         }
     }
 }

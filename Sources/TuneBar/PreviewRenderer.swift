@@ -12,13 +12,17 @@ enum PreviewRenderer {
         // installed app): volume as a dial, brightness as a bar, to show that a
         // dial column drops its slider-only rows.
         let p = Preferences.shared
+        p.showVolume = true
         p.showBrightness = true
         p.volumeControl = .dial
         p.volumeDialStyle = .realistic
         p.brightnessControl = .bar
-        let view = ChannelGrid()
+        let view = HStack(alignment: .top, spacing: 14) {
+            ChannelCard(title: "音量", systemImage: "speaker.wave.2.fill", isVolume: true)
+            ChannelCard(title: "亮度", systemImage: "sun.max.fill", isVolume: false)
+        }
             .padding(20)
-            .frame(width: 620, alignment: .leading)
+            .frame(width: 680, alignment: .leading)
             .background(Color(white: 0.14))
             .environment(\.colorScheme, .dark)
         let renderer = ImageRenderer(content: view)

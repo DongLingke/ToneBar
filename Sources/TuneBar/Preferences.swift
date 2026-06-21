@@ -161,6 +161,38 @@ enum DialStyle: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Percentage readout style
+
+enum PercentStyle: String, CaseIterable, Identifiable {
+    case none      // hidden
+    case integer   // 75
+    case percent   // 75%
+    case decimal   // 0.75
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .none:    return "不显示"
+        case .integer: return "数字  75"
+        case .percent: return "百分号  75%"
+        case .decimal: return "小数  0.75"
+        }
+    }
+
+    /// Rendered text for a 0...1 value, or nil when hidden.
+    func text(_ value: Double) -> String? {
+        switch self {
+        case .none:    return nil
+        case .integer: return "\(Int((value * 100).rounded()))"
+        case .percent: return "\(Int((value * 100).rounded()))%"
+        case .decimal: return String(format: "%.2f", value)
+        }
+    }
+
+    var width: CGFloat { self == .percent ? 34 : (self == .decimal ? 32 : 26) }
+}
+
 // MARK: - Layout of the two sliders
 
 enum SliderLayout: String, CaseIterable, Identifiable {
@@ -205,8 +237,8 @@ final class Preferences: ObservableObject {
     @Published var steps: Int {
         didSet { store.set(steps, forKey: Keys.steps) }
     }
-    @Published var showPercentage: Bool {
-        didSet { store.set(showPercentage, forKey: Keys.showPercentage) }
+    @Published var percentStyle: PercentStyle {
+        didSet { store.set(percentStyle.rawValue, forKey: Keys.percentStyle) }
     }
     @Published var glassBackground: Bool {
         didSet { store.set(glassBackground, forKey: Keys.glassBackground) }
@@ -290,7 +322,12 @@ final class Preferences: ObservableObject {
         steps = rawSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
                                         max(Preferences.stepRange.lowerBound, rawSteps))
 
-        showPercentage = store.object(forKey: Keys.showPercentage) as? Bool ?? false
+        // Migrate the old on/off percentage toggle into a style.
+        if let raw = store.string(forKey: Keys.percentStyle), let s = PercentStyle(rawValue: raw) {
+            percentStyle = s
+        } else {
+            percentStyle = (store.object(forKey: "showPercentage") as? Bool ?? false) ? .integer : .none
+        }
         glassBackground = store.object(forKey: Keys.glassBackground) as? Bool ?? true
         tint = TintChoice(rawValue: store.string(forKey: Keys.tint) ?? "") ?? .system
 
@@ -377,7 +414,7 @@ final class Preferences: ObservableObject {
         static let hideKnobWhenIdle = "hideKnobWhenIdle"
         static let sliderWidth = "sliderWidth"
         static let steps = "steps"
-        static let showPercentage = "showPercentage"
+        static let percentStyle = "percentStyle"
         static let glassBackground = "glassBackground"
         static let tint = "tint"
         static let sliderLayout = "sliderLayout"
