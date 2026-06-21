@@ -314,16 +314,17 @@ final class Preferences: ObservableObject {
 
     private init() {
         // Factory defaults reflect the curated out-of-the-box look:
-        // no icon · segmented track · bar knob · 85pt · 11 steps · glass on.
+        // both channels = semicircle dials, no icon, 60pt, glass on,
+        // brightness scroll at 0.5×.
         iconStyle = IconStyle(rawValue: store.string(forKey: Keys.iconStyle) ?? "") ?? .none
-        sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .segmented
-        knobStyle = KnobStyle(rawValue: store.string(forKey: Keys.knobStyle) ?? "") ?? .bar
-        hideKnobWhenIdle = store.object(forKey: Keys.hideKnobWhenIdle) as? Bool ?? false
-        sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 85
+        sliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.sliderStyle) ?? "") ?? .line
+        knobStyle = KnobStyle(rawValue: store.string(forKey: Keys.knobStyle) ?? "") ?? .circle
+        hideKnobWhenIdle = store.object(forKey: Keys.hideKnobWhenIdle) as? Bool ?? true
+        sliderWidth = (store.object(forKey: Keys.sliderWidth) as? Double).map { max(60, min(240, $0)) } ?? 60
 
         // Normalize persisted step counts into the supported 5...20 range
         // (0 stays "continuous").
-        let rawSteps = store.object(forKey: Keys.steps) as? Int ?? 11
+        let rawSteps = store.object(forKey: Keys.steps) as? Int ?? 0
         steps = rawSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
                                         max(Preferences.stepRange.lowerBound, rawSteps))
 
@@ -348,14 +349,14 @@ final class Preferences: ObservableObject {
         let (briCtl, briDialMig) = Self.splitControl(store.string(forKey: Keys.brightnessControl))
 
         showVolume = store.object(forKey: Keys.showVolume) as? Bool ?? true
-        volumeControl = volCtl
-        volumeDialStyle = DialStyle(rawValue: store.string(forKey: Keys.volumeDialStyle) ?? "") ?? volDialMig ?? .flat
-        volumeScrollSpeed = Self.migratedSpeed(store, Keys.volumeScrollSpeed, "volumeScroll", legacyScroll)
+        volumeControl = store.object(forKey: Keys.volumeControl) == nil ? .dial : volCtl
+        volumeDialStyle = DialStyle(rawValue: store.string(forKey: Keys.volumeDialStyle) ?? "") ?? volDialMig ?? .semiGauge
+        volumeScrollSpeed = Self.migratedSpeed(store, Keys.volumeScrollSpeed, "volumeScroll", legacyScroll, 1.0)
         invertVolumeScroll = store.object(forKey: Keys.invertVolumeScroll) as? Bool ?? legacyInvert ?? false
 
-        showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? false
-        brightnessControl = briCtl
-        brightnessDialStyle = DialStyle(rawValue: store.string(forKey: Keys.brightnessDialStyle) ?? "") ?? briDialMig ?? .flat
+        showBrightness = store.object(forKey: Keys.showBrightness) as? Bool ?? true
+        brightnessControl = store.object(forKey: Keys.brightnessControl) == nil ? .dial : briCtl
+        brightnessDialStyle = DialStyle(rawValue: store.string(forKey: Keys.brightnessDialStyle) ?? "") ?? briDialMig ?? .semiGauge
         brightnessSliderStyle = SliderStyle(rawValue: store.string(forKey: Keys.brightnessSliderStyle) ?? "") ?? .capsule
         brightnessKnobStyle = KnobStyle(rawValue: store.string(forKey: Keys.brightnessKnobStyle) ?? "") ?? .circle
         brightnessTint = TintChoice(rawValue: store.string(forKey: Keys.brightnessTint) ?? "") ?? .orange
@@ -364,7 +365,7 @@ final class Preferences: ObservableObject {
         let rawBriSteps = store.object(forKey: Keys.brightnessSteps) as? Int ?? 0
         brightnessSteps = rawBriSteps == 0 ? 0 : min(Preferences.stepRange.upperBound,
                                                      max(Preferences.stepRange.lowerBound, rawBriSteps))
-        brightnessScrollSpeed = Self.migratedSpeed(store, Keys.brightnessScrollSpeed, "brightnessScroll", legacyScroll)
+        brightnessScrollSpeed = Self.migratedSpeed(store, Keys.brightnessScrollSpeed, "brightnessScroll", legacyScroll, 0.5)
         invertBrightnessScroll = store.object(forKey: Keys.invertBrightnessScroll) as? Bool ?? legacyInvert ?? false
 
         launchAtLogin = LaunchAtLogin.isEnabled
@@ -395,10 +396,11 @@ final class Preferences: ObservableObject {
     /// control type + dial design pair.
     /// Migrate an old on/off scroll boolean into a 0...4 speed (1 == on).
     private static func migratedSpeed(_ store: UserDefaults, _ key: String,
-                                      _ legacyKey: String, _ legacyScroll: Bool?) -> Double {
+                                      _ legacyKey: String, _ legacyScroll: Bool?,
+                                      _ fallback: Double) -> Double {
         if let v = store.object(forKey: key) as? Double { return v }
-        let on = (store.object(forKey: legacyKey) as? Bool) ?? legacyScroll ?? true
-        return on ? 1.0 : 0.0
+        if let on = (store.object(forKey: legacyKey) as? Bool) ?? legacyScroll { return on ? 1.0 : 0.0 }
+        return fallback
     }
 
     private static func splitControl(_ raw: String?) -> (ControlStyle, DialStyle?) {
