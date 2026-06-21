@@ -19,8 +19,11 @@ struct DialControl: View {
     private let gaugeSweep = 270.0
 
     var body: some View {
-        content
-            .frame(width: style.isSemicircle ? diameter * 2 : diameter, height: diameter)
+        // Semicircle gauges read large; render them at 85% overall.
+        let semiScale: CGFloat = 0.85
+        return content
+            .frame(width: style.isSemicircle ? diameter * 2 * semiScale : diameter,
+                   height: style.isSemicircle ? diameter * semiScale : diameter)
             .opacity(muted ? 0.5 : 1)
             .contentShape(Rectangle())
             .onHover { onHover($0) }
