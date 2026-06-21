@@ -199,20 +199,14 @@ struct DialControl: View {
 
                 if ticks > 1 {
                     let active = Int((value * Double(ticks - 1)).rounded())
-                    ForEach(0..<ticks, id: \.self) { i in
-                        let f = Double(i) / Double(ticks - 1)
-                        let deg = 180 + 180 * f
-                        let on = i <= active
-                        let len = h * (on ? 0.28 : 0.20)
-                        let rad = deg * .pi / 180
-                        Capsule()
-                            .fill(on ? AnyShapeStyle(tint) : AnyShapeStyle(.primary.opacity(0.28)))
-                            .frame(width: max(1.3, h * 0.06), height: len)
-                            .shadow(color: on ? tint.opacity(0.6) : .clear, radius: h * 0.02)
-                            .position(x: cx + CGFloat(cos(rad)) * (r - len * 0.45),
-                                      y: cy + CGFloat(sin(rad)) * (r - len * 0.45))
-                            .rotationEffect(.degrees(deg - 90), anchor: .center)
-                    }
+                    let tickW = max(1.3, h * 0.06)
+                    GaugeTicks(count: ticks, active: active, lit: false,
+                               innerRatio: 0.70, outerRatio: 0.96)
+                        .stroke(.primary.opacity(0.28), style: .init(lineWidth: tickW, lineCap: .round))
+                    GaugeTicks(count: ticks, active: active, lit: true,
+                               innerRatio: 0.62, outerRatio: 0.99)
+                        .stroke(tint, style: .init(lineWidth: tickW, lineCap: .round))
+                        .shadow(color: tint.opacity(0.6), radius: h * 0.02)
                 }
 
                 if needle {
@@ -249,6 +243,32 @@ struct DialControl: View {
             .frame(width: width, height: length)
             .offset(y: -length / 2 - diameter * 0.06)
             .rotationEffect(pointerAngle - .degrees(270))
+    }
+}
+
+/// Radial tick marks along a 180° semicircle gauge (center at bottom-middle).
+struct GaugeTicks: Shape {
+    var count: Int
+    var active: Int
+    var lit: Bool          // draw the lit subset (i <= active) or the rest
+    var innerRatio: CGFloat
+    var outerRatio: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        guard count > 1 else { return path }
+        let cx = rect.midX
+        let cy = rect.height * 0.97
+        let r = min(rect.width / 2, rect.height * 0.97) * 0.98
+        for i in 0..<count {
+            if (i <= active) != lit { continue }
+            let f = Double(i) / Double(count - 1)
+            let a = (180 + 180 * f) * .pi / 180
+            let dx = CGFloat(cos(a)), dy = CGFloat(sin(a))
+            path.move(to: CGPoint(x: cx + dx * r * innerRatio, y: cy + dy * r * innerRatio))
+            path.addLine(to: CGPoint(x: cx + dx * r * outerRatio, y: cy + dy * r * outerRatio))
+        }
+        return path
     }
 }
 

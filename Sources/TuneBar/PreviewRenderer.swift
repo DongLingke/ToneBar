@@ -106,10 +106,12 @@ private struct PreviewSheet: View {
                 .padding(.horizontal, 10).padding(.vertical, 3)
                 .frame(height: 24).background(Capsule().fill(Color.white.opacity(0.08)))
 
-                // dials in the bar
+                // dials in the bar (menu-bar size, incl. semicircle)
                 HStack(spacing: 8) {
-                    DialControl(value: .constant(0.6), diameter: 18, tint: .blue, style: .ring, muted: false)
-                    DialControl(value: .constant(0.85), diameter: 18, tint: .orange, style: .pie, muted: false)
+                    Image(systemName: "speaker.wave.2.fill")
+                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(.white)
+                    DialControl(value: .constant(0.6), diameter: 18, tint: .blue, style: .semiTicks, muted: false)
+                    DialControl(value: .constant(0.7), diameter: 18, tint: .orange, style: .semiNeedle, muted: false)
                 }
                 .padding(.horizontal, 10).padding(.vertical, 3)
                 .frame(height: 24).background(Capsule().fill(Color.white.opacity(0.08)))
