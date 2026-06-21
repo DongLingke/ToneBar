@@ -59,7 +59,7 @@ final class MenuBarController: NSObject {
         let view = StatusHostingView(rootView: rootView)
         view.translatesAutoresizingMaskIntoConstraints = true
         view.onScroll = { [weak self] delta in self?.handleScroll(delta) }
-        view.onRightClick = { [weak self] event in self?.showMenu(event) }
+        view.onRightClick = { [weak self] _ in self?.openSettings() }
         hostingView = view
 
         if let button = statusItem.button {
@@ -125,47 +125,13 @@ final class MenuBarController: NSObject {
         }
     }
 
-    // MARK: - Menu
+    // MARK: - Settings
 
-    private func showMenu(_ event: NSEvent) {
-        guard let button = statusItem.button else { return }
-        let menu = NSMenu()
-
-        let mute = NSMenuItem(title: audio.muted ? "取消静音" : "静音",
-                              action: #selector(toggleMute), keyEquivalent: "")
-        mute.target = self
-        menu.addItem(mute)
-
-        if !audio.deviceName.isEmpty {
-            let device = NSMenuItem(title: "输出设备：\(audio.deviceName)", action: nil, keyEquivalent: "")
-            device.isEnabled = false
-            menu.addItem(device)
-        }
-
-        menu.addItem(.separator())
-
-        let settings = NSMenuItem(title: "设置…", action: #selector(openSettings), keyEquivalent: ",")
-        settings.target = self
-        menu.addItem(settings)
-
-        let quit = NSMenuItem(title: "退出 调条 TuneBar", action: #selector(quit), keyEquivalent: "q")
-        quit.target = self
-        menu.addItem(quit)
-
-        menu.popUp(positioning: nil,
-                   at: NSPoint(x: 0, y: button.bounds.height + 5),
-                   in: button)
-    }
-
-    @objc private func toggleMute() { audio.toggleMute() }
-
-    @objc private func openSettings() {
+    private func openSettings() {
         if settingsController == nil {
             settingsController = SettingsWindowController(audio: audio, brightness: brightness)
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsController?.show()
     }
-
-    @objc private func quit() { NSApp.terminate(nil) }
 }
